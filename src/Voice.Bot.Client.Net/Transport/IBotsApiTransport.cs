@@ -21,6 +21,8 @@ internal interface IBotsApiTransport
     Task<DeleteMessageResponse> DeleteMessageAsync(DeleteMessageRequest request, CancellationToken ct);
     Task<MessageInfo> AddReactionAsync(ReactionRequest request, CancellationToken ct);
     Task<MessageInfo> RemoveReactionAsync(ReactionRequest request, CancellationToken ct);
+    Task<GetChannelMessagesResponse> GetChannelMessagesAsync(GetChannelMessagesRequest request, CancellationToken ct);
+    Task<MessageInfo> GetMessageAsync(GetMessageRequest request, CancellationToken ct);
     Task TypingAsync(TypingRequest request, CancellationToken ct);
     Task SetTypingAsync(BotTypingRequest request, CancellationToken ct);
     Task<GetMyGroupsResponse> GetMyGroupsAsync(CancellationToken ct);

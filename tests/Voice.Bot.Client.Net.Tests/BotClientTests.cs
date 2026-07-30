@@ -212,6 +212,56 @@ public class BotClientTests
     }
 
     [Fact]
+    public async Task GetChannelMessagesAsync_ShouldReturnMappedMessages_AndOmitBeforeId_WhenNotProvided()
+    {
+        var channelId = Guid.NewGuid();
+        var messageId = Guid.NewGuid();
+        var response = new Vc.Backend.WebApi.Bots.Apis.Grpc.GetChannelMessagesResponse();
+        response.Messages.Add(CreateGrpcMessageInfo(messageId, channelId, "hi"));
+        _transportMock.Setup(x => x.GetChannelMessagesAsync(It.IsAny<Vc.Backend.WebApi.Bots.Apis.Grpc.GetChannelMessagesRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(response);
+
+        var result = await _client.GetChannelMessagesAsync(channelId, limit: 25);
+
+        result.Should().ContainSingle(m => m.Id == messageId && m.Content == "hi");
+        _transportMock.Verify(x => x.GetChannelMessagesAsync(
+            It.Is<Vc.Backend.WebApi.Bots.Apis.Grpc.GetChannelMessagesRequest>(r => r.ChannelId == channelId.ToString() && r.Limit == 25 && !r.HasBeforeId),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetChannelMessagesAsync_ShouldForwardBeforeId_WhenProvided()
+    {
+        var channelId = Guid.NewGuid();
+        var beforeId = Guid.NewGuid();
+        _transportMock.Setup(x => x.GetChannelMessagesAsync(It.IsAny<Vc.Backend.WebApi.Bots.Apis.Grpc.GetChannelMessagesRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Vc.Backend.WebApi.Bots.Apis.Grpc.GetChannelMessagesResponse());
+
+        await _client.GetChannelMessagesAsync(channelId, limit: 50, beforeId: beforeId);
+
+        _transportMock.Verify(x => x.GetChannelMessagesAsync(
+            It.Is<Vc.Backend.WebApi.Bots.Apis.Grpc.GetChannelMessagesRequest>(r => r.BeforeId == beforeId.ToString()),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetMessageAsync_ShouldReturnMappedMessage()
+    {
+        var messageId = Guid.NewGuid();
+        var channelId = Guid.NewGuid();
+        _transportMock.Setup(x => x.GetMessageAsync(It.IsAny<Vc.Backend.WebApi.Bots.Apis.Grpc.GetMessageRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CreateGrpcMessageInfo(messageId, channelId, "hi"));
+
+        var result = await _client.GetMessageAsync(messageId);
+
+        result.Id.Should().Be(messageId);
+        result.Content.Should().Be("hi");
+        _transportMock.Verify(x => x.GetMessageAsync(
+            It.Is<Vc.Backend.WebApi.Bots.Apis.Grpc.GetMessageRequest>(r => r.MessageId == messageId.ToString()),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
     public async Task TypingAsync_ShouldSendChannelIdAndIsTyping()
     {
         var channelId = Guid.NewGuid();

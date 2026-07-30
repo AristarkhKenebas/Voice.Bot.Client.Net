@@ -61,6 +61,12 @@ internal sealed class GrpcBotsApiTransport : IBotsApiTransport, IAsyncDisposable
     public Task<MessageInfo> RemoveReactionAsync(ReactionRequest request, CancellationToken ct) =>
         CallAsync(() => _client.RemoveReactionAsync(request, _authHeaders, cancellationToken: ct));
 
+    public Task<GetChannelMessagesResponse> GetChannelMessagesAsync(GetChannelMessagesRequest request, CancellationToken ct) =>
+        CallAsync(() => _client.GetChannelMessagesAsync(request, _authHeaders, cancellationToken: ct));
+
+    public Task<MessageInfo> GetMessageAsync(GetMessageRequest request, CancellationToken ct) =>
+        CallAsync(() => _client.GetMessageAsync(request, _authHeaders, cancellationToken: ct));
+
     public Task TypingAsync(TypingRequest request, CancellationToken ct) =>
         CallVoidAsync(() => _client.TypingAsync(request, _authHeaders, cancellationToken: ct));
 

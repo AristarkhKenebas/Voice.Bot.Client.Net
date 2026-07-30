@@ -4,6 +4,8 @@ using GrpcSendMessageRequest = Vc.Backend.WebApi.Bots.Apis.Grpc.SendMessageReque
 using GrpcUpdateMessageRequest = Vc.Backend.WebApi.Bots.Apis.Grpc.UpdateMessageRequest;
 using GrpcDeleteMessageRequest = Vc.Backend.WebApi.Bots.Apis.Grpc.DeleteMessageRequest;
 using GrpcReactionRequest = Vc.Backend.WebApi.Bots.Apis.Grpc.ReactionRequest;
+using GrpcGetChannelMessagesRequest = Vc.Backend.WebApi.Bots.Apis.Grpc.GetChannelMessagesRequest;
+using GrpcGetMessageRequest = Vc.Backend.WebApi.Bots.Apis.Grpc.GetMessageRequest;
 using GrpcTypingRequest = Vc.Backend.WebApi.Bots.Apis.Grpc.TypingRequest;
 using GrpcBotTypingRequest = Vc.Backend.WebApi.Bots.Apis.Grpc.BotTypingRequest;
 
@@ -41,6 +43,25 @@ public sealed partial class BotClient
 
     public async Task<MessageInfo> RemoveReactionAsync(Guid messageId, string emoji, CancellationToken ct = default) =>
         (await _transport.RemoveReactionAsync(new GrpcReactionRequest { MessageId = messageId.ToString(), Emoji = emoji }, ct)).ToModel();
+
+    /// <summary>
+    /// Recent messages in a channel, oldest to newest - requires the <c>GuildMessages</c> intent. Gives the
+    /// bot context (channel history) rather than only reacting to new events from the Gateway. To page
+    /// backwards, pass the id of the oldest message received so far as <paramref name="beforeId"/>.
+    /// </summary>
+    public async Task<IReadOnlyList<MessageInfo>> GetChannelMessagesAsync(
+        Guid channelId, int limit = 50, Guid? beforeId = null, CancellationToken ct = default)
+    {
+        var request = new GrpcGetChannelMessagesRequest { ChannelId = channelId.ToString(), Limit = limit };
+        if (beforeId.HasValue) request.BeforeId = beforeId.Value.ToString();
+
+        var response = await _transport.GetChannelMessagesAsync(request, ct);
+        return response.Messages.Select(m => m.ToModel()).ToList();
+    }
+
+    /// <summary>Details of a single message by id - useful when only the message id is known (e.g. from an interaction).</summary>
+    public async Task<MessageInfo> GetMessageAsync(Guid messageId, CancellationToken ct = default) =>
+        (await _transport.GetMessageAsync(new GrpcGetMessageRequest { MessageId = messageId.ToString() }, ct)).ToModel();
 
     public Task TypingAsync(Guid channelId, bool isTyping = true, CancellationToken ct = default) =>
         _transport.TypingAsync(new GrpcTypingRequest { ChannelId = channelId.ToString(), IsTyping = isTyping }, ct);

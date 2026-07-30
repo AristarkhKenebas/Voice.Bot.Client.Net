@@ -47,6 +47,16 @@ service BotsApi {
   // Требует scope "messages.manage". Убирает emoji-реакцию бота.
   rpc RemoveReaction (ReactionRequest) returns (MessageInfo);
 
+  // Требует intent GuildMessages. Последние сообщения канала (аналог MessagesApi.GetChannelMessages
+  // для людей) — даёт боту контекст (историю) канала, а не только реакцию на новые события из Gateway.
+  // Отсортированы от старых к новым; для пагинации назад передавайте id самого старого полученного
+  // сообщения в before_id.
+  rpc GetChannelMessages (GetChannelMessagesRequest) returns (GetChannelMessagesResponse);
+
+  // Требует intent GuildMessages. Детали одного сообщения по его id — полезно, когда известен только
+  // message_id (например из InvokeMessageComponentRequest), без похода за всей историей канала.
+  rpc GetMessage (GetMessageRequest) returns (MessageInfo);
+
   // Требует scope "messages.manage". Индикатор "бот печатает" в канале.
   rpc Typing (TypingRequest) returns (google.protobuf.Empty);
 
@@ -164,6 +174,22 @@ message BotTypingRequest {
 
 message ReactionUsers {
   repeated string user_ids = 1;
+}
+
+message GetChannelMessagesRequest {
+  string channel_id = 1;
+  // 1..100 — как и у MessagesApi.GetChannelMessages, значение вне диапазона (включая 0/не указано)
+  // отклоняется валидатором.
+  int32 limit = 2;
+  optional string before_id = 3;
+}
+
+message GetChannelMessagesResponse {
+  repeated MessageInfo messages = 1;
+}
+
+message GetMessageRequest {
+  string message_id = 1;
 }
 
 message MessageInfo {

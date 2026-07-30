@@ -142,6 +142,22 @@ await client.SendMessageAsync(channelId, "Выберите вариант:", com
 клик по компоненту (`Context.RespondWithModalAsync(modal)`). Обработчики кликов и сабмитов —
 методы модуля с `[ComponentInteraction("customId:*")]`/`[ModalInteraction("customId")]`.
 
+## История сообщений
+
+Требует intent `GuildMessages`. Даёт боту доступ к контексту канала, а не только к новым событиям
+из Gateway:
+
+```csharp
+// Последние 50 сообщений канала, от старых к новым
+var history = await client.GetChannelMessagesAsync(channelId, limit: 50);
+
+// Пагинация назад - id самого старого полученного сообщения в beforeId
+var older = await client.GetChannelMessagesAsync(channelId, limit: 50, beforeId: history[0].Id);
+
+// Одно сообщение по id - например, чтобы узнать контекст InvokeMessageComponent
+var message = await client.GetMessageAsync(messageId);
+```
+
 ## Управление ролями и структурой группы
 
 Бот с выданным intent'ом `Guilds` и правами `ManageChannels`/`ManageRoles` в конкретной группе
