@@ -16,6 +16,23 @@ public sealed partial class BotClient
     public async Task<BotGroupDetails> GetGroupAsync(Guid groupId, CancellationToken ct = default) =>
         (await _transport.GetGroupAsync(new GrpcGetGroupRequest { GroupId = groupId.ToString() }, ct)).ToModel();
 
+    /// <summary>
+    /// Lean slice of <see cref="GetGroupAsync"/> - just the category list (no nested channels), for
+    /// callers that don't need the full tree.
+    /// </summary>
+    public async Task<IReadOnlyList<BotCategoryInfo>> GetGroupCategoriesAsync(Guid groupId, CancellationToken ct = default) =>
+        (await _transport.GetGroupCategoriesAsync(new GrpcGetGroupRequest { GroupId = groupId.ToString() }, ct))
+            .Categories.Select(c => c.ToModel()).ToList();
+
+    /// <summary>
+    /// Lean slice of <see cref="GetGroupAsync"/> - a flat, permission-filtered channel list, without
+    /// the per-channel live connected-users list <see cref="GetGroupAsync"/> attaches - cheaper when
+    /// only channel structure is needed, not live voice presence.
+    /// </summary>
+    public async Task<IReadOnlyList<BotChannelInfo>> GetGroupChannelsAsync(Guid groupId, CancellationToken ct = default) =>
+        (await _transport.GetGroupChannelsAsync(new GrpcGetGroupRequest { GroupId = groupId.ToString() }, ct))
+            .Channels.Select(c => c.ToModel()).ToList();
+
     public async Task<IReadOnlyList<User>> GetGroupUsersAsync(Guid groupId, CancellationToken ct = default) =>
         (await _transport.GetGroupUsersAsync(new GrpcGetGroupUsersRequest { GroupId = groupId.ToString() }, ct)).Users.Select(u => u.ToModel()).ToList();
 

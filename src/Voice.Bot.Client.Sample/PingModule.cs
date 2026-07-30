@@ -12,6 +12,7 @@ public sealed class PingModule : InteractionModuleBase
     public async Task Ping()
     {
         await Task.Delay(1000);
+        
         await RespondAsync("pong");
     }
 

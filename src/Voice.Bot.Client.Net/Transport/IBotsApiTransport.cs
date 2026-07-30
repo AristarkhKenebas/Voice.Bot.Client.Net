@@ -27,6 +27,8 @@ internal interface IBotsApiTransport
     Task SetTypingAsync(BotTypingRequest request, CancellationToken ct);
     Task<GetMyGroupsResponse> GetMyGroupsAsync(CancellationToken ct);
     Task<BotGroupDetails> GetGroupAsync(GetGroupRequest request, CancellationToken ct);
+    Task<GetGroupCategoriesResponse> GetGroupCategoriesAsync(GetGroupRequest request, CancellationToken ct);
+    Task<GetGroupChannelsResponse> GetGroupChannelsAsync(GetGroupRequest request, CancellationToken ct);
     Task<GetGroupUsersResponse> GetGroupUsersAsync(GetGroupUsersRequest request, CancellationToken ct);
     Task<BotChannelDetails> GetChannelAsync(GetChannelRequest request, CancellationToken ct);
     Task RespondToInteractionAsync(RespondToInteractionRequest request, CancellationToken ct);

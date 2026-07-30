@@ -17,6 +17,10 @@ using GrpcBotGroupInfo = Vc.Backend.WebApi.Bots.Apis.Grpc.BotGroupInfo;
 using GrpcBotGroupDetails = Vc.Backend.WebApi.Bots.Apis.Grpc.BotGroupDetails;
 using GrpcGetGroupUsersResponse = Vc.Backend.WebApi.Bots.Apis.Grpc.GetGroupUsersResponse;
 using GrpcBotChannelDetails = Vc.Backend.WebApi.Bots.Apis.Grpc.BotChannelDetails;
+using GrpcGetGroupCategoriesResponse = Vc.Backend.WebApi.Bots.Apis.Grpc.GetGroupCategoriesResponse;
+using GrpcGetGroupChannelsResponse = Vc.Backend.WebApi.Bots.Apis.Grpc.GetGroupChannelsResponse;
+using GrpcBotCategoryInfo = Vc.Backend.WebApi.Bots.Apis.Grpc.BotCategoryInfo;
+using GrpcBotChannelInfo = Vc.Backend.WebApi.Bots.Apis.Grpc.BotChannelInfo;
 
 namespace Voice.Bot.Client.Net.Tests;
 
@@ -312,6 +316,42 @@ public class BotClientTests
         result.Id.Should().Be(groupId);
         result.Name.Should().Be("Detailed Group");
         _transportMock.Verify(x => x.GetGroupAsync(
+            It.Is<Vc.Backend.WebApi.Bots.Apis.Grpc.GetGroupRequest>(r => r.GroupId == groupId.ToString()),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetGroupCategoriesAsync_ShouldSendGroupId_AndReturnMappedCategories()
+    {
+        var groupId = Guid.NewGuid();
+        var categoryId = Guid.NewGuid();
+        var response = new GrpcGetGroupCategoriesResponse();
+        response.Categories.Add(new GrpcBotCategoryInfo { Id = categoryId.ToString(), Name = "General", Position = "0" });
+        _transportMock.Setup(x => x.GetGroupCategoriesAsync(It.IsAny<Vc.Backend.WebApi.Bots.Apis.Grpc.GetGroupRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(response);
+
+        var result = await _client.GetGroupCategoriesAsync(groupId);
+
+        result.Should().ContainSingle(c => c.Id == categoryId && c.Name == "General");
+        _transportMock.Verify(x => x.GetGroupCategoriesAsync(
+            It.Is<Vc.Backend.WebApi.Bots.Apis.Grpc.GetGroupRequest>(r => r.GroupId == groupId.ToString()),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetGroupChannelsAsync_ShouldSendGroupId_AndReturnMappedChannels()
+    {
+        var groupId = Guid.NewGuid();
+        var channelId = Guid.NewGuid();
+        var response = new GrpcGetGroupChannelsResponse();
+        response.Channels.Add(new GrpcBotChannelInfo { Id = channelId.ToString(), Name = "general", Type = (int)ChannelType.Text, Position = "0" });
+        _transportMock.Setup(x => x.GetGroupChannelsAsync(It.IsAny<Vc.Backend.WebApi.Bots.Apis.Grpc.GetGroupRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(response);
+
+        var result = await _client.GetGroupChannelsAsync(groupId);
+
+        result.Should().ContainSingle(c => c.Id == channelId && c.Name == "general");
+        _transportMock.Verify(x => x.GetGroupChannelsAsync(
             It.Is<Vc.Backend.WebApi.Bots.Apis.Grpc.GetGroupRequest>(r => r.GroupId == groupId.ToString()),
             It.IsAny<CancellationToken>()), Times.Once);
     }

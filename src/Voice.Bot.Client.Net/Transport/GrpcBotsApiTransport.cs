@@ -79,6 +79,12 @@ internal sealed class GrpcBotsApiTransport : IBotsApiTransport, IAsyncDisposable
     public Task<BotGroupDetails> GetGroupAsync(GetGroupRequest request, CancellationToken ct) =>
         CallAsync(() => _client.GetGroupAsync(request, _authHeaders, cancellationToken: ct));
 
+    public Task<GetGroupCategoriesResponse> GetGroupCategoriesAsync(GetGroupRequest request, CancellationToken ct) =>
+        CallAsync(() => _client.GetGroupCategoriesAsync(request, _authHeaders, cancellationToken: ct));
+
+    public Task<GetGroupChannelsResponse> GetGroupChannelsAsync(GetGroupRequest request, CancellationToken ct) =>
+        CallAsync(() => _client.GetGroupChannelsAsync(request, _authHeaders, cancellationToken: ct));
+
     public Task<GetGroupUsersResponse> GetGroupUsersAsync(GetGroupUsersRequest request, CancellationToken ct) =>
         CallAsync(() => _client.GetGroupUsersAsync(request, _authHeaders, cancellationToken: ct));
 

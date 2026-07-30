@@ -75,6 +75,15 @@ service BotsApi {
   // Требует scope "groups.read". Детали одной группы (категории и каналы), в которой бот состоит.
   rpc GetGroup (GetGroupRequest) returns (BotGroupDetails);
 
+  // Требует scope "groups.read". Лёгкий срез GetGroup — только категории (без вложенных каналов).
+  // Для бота, которому нужен только список/порядок категорий, без полного дерева.
+  rpc GetGroupCategories (GetGroupRequest) returns (GetGroupCategoriesResponse);
+
+  // Требует scope "groups.read". Лёгкий срез GetGroup — плоский список каналов, доступных боту
+  // (с учётом ViewChannels), без per-канального списка "кто сейчас в голосовом канале" — если
+  // нужна только структура, а не live-присутствие, этот вызов дешевле GetGroup.
+  rpc GetGroupChannels (GetGroupRequest) returns (GetGroupChannelsResponse);
+
   // Требует scope "groups.read". Текущие участники группы (common.User, включая ботов с is_bot = true).
   rpc GetGroupUsers (GetGroupUsersRequest) returns (GetGroupUsersResponse);
 
@@ -255,6 +264,15 @@ message BotGroupDetails {
   string avatar_id = 5;
   string banner_id = 6;
   repeated BotCategoryInfo categories = 7;
+}
+
+// BotCategoryInfo.channels пуст здесь — см. GetGroupChannels для каналов.
+message GetGroupCategoriesResponse {
+  repeated BotCategoryInfo categories = 1;
+}
+
+message GetGroupChannelsResponse {
+  repeated BotChannelInfo channels = 1;
 }
 
 message GetGroupUsersRequest {
