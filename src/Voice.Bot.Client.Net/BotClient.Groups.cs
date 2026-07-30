@@ -3,7 +3,12 @@ using GrpcGetGroupRequest = Vc.Backend.WebApi.Bots.Apis.Grpc.GetGroupRequest;
 using GrpcGetGroupUsersRequest = Vc.Backend.WebApi.Bots.Apis.Grpc.GetGroupUsersRequest;
 using GrpcGetChannelRequest = Vc.Backend.WebApi.Bots.Apis.Grpc.GetChannelRequest;
 using GrpcCreateCategoryRequest = Vc.Backend.WebApi.Bots.Apis.Grpc.CreateCategoryRequest;
+using GrpcGetCategoryRequest = Vc.Backend.WebApi.Bots.Apis.Grpc.GetCategoryRequest;
 using GrpcCreateChannelRequest = Vc.Backend.WebApi.Bots.Apis.Grpc.CreateChannelRequest;
+using GrpcUpdateChannelRequest = Vc.Backend.WebApi.Bots.Apis.Grpc.UpdateChannelRequest;
+using GrpcUpdateCategoryRequest = Vc.Backend.WebApi.Bots.Apis.Grpc.UpdateCategoryRequest;
+using GrpcDeleteChannelRequest = Vc.Backend.WebApi.Bots.Apis.Grpc.DeleteChannelRequest;
+using GrpcDeleteCategoryRequest = Vc.Backend.WebApi.Bots.Apis.Grpc.DeleteCategoryRequest;
 
 namespace Voice.Bot.Client.Net;
 
@@ -47,8 +52,28 @@ public sealed partial class BotClient
     public async Task<BotCategoryInfo> CreateCategoryAsync(Guid groupId, string name, CancellationToken ct = default) =>
         (await _transport.CreateCategoryAsync(new GrpcCreateCategoryRequest { GroupId = groupId.ToString(), Name = name }, ct)).ToModel();
 
+    /// <summary>Details of a single category - no <c>ManageChannels</c> requirement, just like <see cref="GetChannelAsync"/>.</summary>
+    public async Task<BotCategoryInfo> GetCategoryAsync(Guid categoryId, CancellationToken ct = default) =>
+        (await _transport.GetCategoryAsync(new GrpcGetCategoryRequest { CategoryId = categoryId.ToString() }, ct)).ToModel();
+
     /// <summary>Creates a channel under a category in a group this bot belongs to (requires <c>Guilds</c> intent + <c>ManageChannels</c>).</summary>
     public async Task<BotChannelInfo> CreateChannelAsync(Guid categoryId, string name, ChannelType type, CancellationToken ct = default) =>
         (await _transport.CreateChannelAsync(
             new GrpcCreateChannelRequest { CategoryId = categoryId.ToString(), Name = name, Type = (int)type }, ct)).ToModel();
+
+    /// <summary>Renames a channel (requires <c>Guilds</c> intent + <c>ManageChannels</c>).</summary>
+    public async Task<BotChannelInfo> UpdateChannelAsync(Guid channelId, string name, CancellationToken ct = default) =>
+        (await _transport.UpdateChannelAsync(new GrpcUpdateChannelRequest { ChannelId = channelId.ToString(), Name = name }, ct)).ToModel();
+
+    /// <summary>Renames a category (requires <c>Guilds</c> intent + <c>ManageChannels</c>).</summary>
+    public async Task<BotCategoryInfo> UpdateCategoryAsync(Guid categoryId, string name, CancellationToken ct = default) =>
+        (await _transport.UpdateCategoryAsync(new GrpcUpdateCategoryRequest { CategoryId = categoryId.ToString(), Name = name }, ct)).ToModel();
+
+    /// <summary>Deletes a channel (requires <c>Guilds</c> intent + <c>ManageChannels</c>).</summary>
+    public async Task<DeleteChannelResult> DeleteChannelAsync(Guid channelId, CancellationToken ct = default) =>
+        (await _transport.DeleteChannelAsync(new GrpcDeleteChannelRequest { ChannelId = channelId.ToString() }, ct)).ToModel();
+
+    /// <summary>Deletes a category (requires <c>Guilds</c> intent + <c>ManageChannels</c>).</summary>
+    public async Task<DeleteCategoryResult> DeleteCategoryAsync(Guid categoryId, CancellationToken ct = default) =>
+        (await _transport.DeleteCategoryAsync(new GrpcDeleteCategoryRequest { CategoryId = categoryId.ToString() }, ct)).ToModel();
 }

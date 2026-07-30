@@ -112,6 +112,21 @@ service BotsApi {
   rpc CreateCategory (CreateCategoryRequest) returns (BotCategoryInfo);
   rpc CreateChannel (CreateChannelRequest) returns (BotChannelInfo);
 
+  // Требует intent Guilds. Детали одной категории по её id - без ManageChannels (структура группы
+  // видна любому участнику, как в Discord), аналог GetChannel для категорий.
+  rpc GetCategory (GetCategoryRequest) returns (BotCategoryInfo);
+
+  // Требует intent Guilds + Permissions.ManageChannels. Переименовывает канал/категорию; каждый
+  // ответ - актуальное состояние сущности (id + все поля), а не пустой Empty, чтобы боту не
+  // приходилось отдельным запросом перечитывать то, что он только что изменил.
+  rpc UpdateChannel (UpdateChannelRequest) returns (BotChannelInfo);
+  rpc UpdateCategory (UpdateCategoryRequest) returns (BotCategoryInfo);
+
+  // Требует intent Guilds + Permissions.ManageChannels. Ответ включает id удалённой сущности - тот
+  // же принцип, что и DeleteMessage/DeleteRole: даже "удаление" возвращает, что именно было удалено.
+  rpc DeleteChannel (DeleteChannelRequest) returns (DeleteChannelResponse);
+  rpc DeleteCategory (DeleteCategoryRequest) returns (DeleteCategoryResponse);
+
   // Требует intent Guilds. Реальная авторизация - Permissions.ManageRoles через managed-роль бота;
   // GroupActor уже проверяет иерархию ролей (нельзя выдать/создать роль выше собственной managed-роли
   // бота) - тот же путь, что и для людей, никакого спецкейса для ботов.
@@ -309,6 +324,38 @@ message CreateChannelRequest {
   string category_id = 1;
   string name = 2;
   int32 type = 3;
+}
+
+message GetCategoryRequest {
+  string category_id = 1;
+}
+
+message UpdateChannelRequest {
+  string channel_id = 1;
+  string name = 2;
+}
+
+message UpdateCategoryRequest {
+  string category_id = 1;
+  string name = 2;
+}
+
+message DeleteChannelRequest {
+  string channel_id = 1;
+}
+
+message DeleteChannelResponse {
+  string id = 1;
+  bool success = 2;
+}
+
+message DeleteCategoryRequest {
+  string category_id = 1;
+}
+
+message DeleteCategoryResponse {
+  string id = 1;
+  bool success = 2;
 }
 
 message CreateRoleRequest {

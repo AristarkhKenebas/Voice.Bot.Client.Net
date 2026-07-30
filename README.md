@@ -170,6 +170,18 @@ var role = await client.CreateRoleAsync(groupId, "Muted", color: "#5865F2");
 await client.AssignRoleAsync(groupId, targetUserId, role.Id);
 ```
 
+Читать/переименовывать/удалять категории и каналы — `GetCategoryAsync`/`UpdateCategoryAsync`/
+`DeleteCategoryAsync` и `UpdateChannelAsync`/`DeleteChannelAsync` (чтение категории не требует
+`ManageChannels`, как и `GetChannelAsync` — структура группы видна любому участнику). Каждый метод
+возвращает актуальное состояние сущности (id + поля), а `Delete*` — `{ Id, Success }`, а не пустой
+ответ:
+
+```csharp
+var renamed = await client.UpdateChannelAsync(channel.Id, "bot-demo-renamed");
+var deleted = await client.DeleteChannelAsync(channel.Id);
+Console.WriteLine($"Удалён канал {deleted.Id}, success={deleted.Success}");
+```
+
 ## Обработка ошибок
 
 Любой неудачный вызов gRPC-метода выбрасывает `BotApiException` (никогда не «сырой»

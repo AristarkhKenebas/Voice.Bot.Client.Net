@@ -500,6 +500,86 @@ public class BotClientTests
     }
 
     [Fact]
+    public async Task GetCategoryAsync_ShouldSendCategoryId_AndReturnMappedCategory()
+    {
+        var categoryId = Guid.NewGuid();
+        _transportMock.Setup(x => x.GetCategoryAsync(It.IsAny<Vc.Backend.WebApi.Bots.Apis.Grpc.GetCategoryRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GrpcBotCategoryInfo { Id = categoryId.ToString(), Name = "Voice", Position = "a" });
+
+        var result = await _client.GetCategoryAsync(categoryId);
+
+        result.Id.Should().Be(categoryId);
+        result.Name.Should().Be("Voice");
+        _transportMock.Verify(x => x.GetCategoryAsync(
+            It.Is<Vc.Backend.WebApi.Bots.Apis.Grpc.GetCategoryRequest>(r => r.CategoryId == categoryId.ToString()),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateChannelAsync_ShouldSendChannelIdAndName_AndReturnMappedChannel()
+    {
+        var channelId = Guid.NewGuid();
+        _transportMock.Setup(x => x.UpdateChannelAsync(It.IsAny<Vc.Backend.WebApi.Bots.Apis.Grpc.UpdateChannelRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GrpcBotChannelInfo { Id = channelId.ToString(), Name = "renamed", Type = 0, Position = "a" });
+
+        var result = await _client.UpdateChannelAsync(channelId, "renamed");
+
+        result.Id.Should().Be(channelId);
+        result.Name.Should().Be("renamed");
+        _transportMock.Verify(x => x.UpdateChannelAsync(
+            It.Is<Vc.Backend.WebApi.Bots.Apis.Grpc.UpdateChannelRequest>(r => r.ChannelId == channelId.ToString() && r.Name == "renamed"),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateCategoryAsync_ShouldSendCategoryIdAndName_AndReturnMappedCategory()
+    {
+        var categoryId = Guid.NewGuid();
+        _transportMock.Setup(x => x.UpdateCategoryAsync(It.IsAny<Vc.Backend.WebApi.Bots.Apis.Grpc.UpdateCategoryRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GrpcBotCategoryInfo { Id = categoryId.ToString(), Name = "renamed", Position = "a" });
+
+        var result = await _client.UpdateCategoryAsync(categoryId, "renamed");
+
+        result.Id.Should().Be(categoryId);
+        result.Name.Should().Be("renamed");
+        _transportMock.Verify(x => x.UpdateCategoryAsync(
+            It.Is<Vc.Backend.WebApi.Bots.Apis.Grpc.UpdateCategoryRequest>(r => r.CategoryId == categoryId.ToString() && r.Name == "renamed"),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task DeleteChannelAsync_ShouldSendChannelId_AndReturnMappedResult()
+    {
+        var channelId = Guid.NewGuid();
+        _transportMock.Setup(x => x.DeleteChannelAsync(It.IsAny<Vc.Backend.WebApi.Bots.Apis.Grpc.DeleteChannelRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Vc.Backend.WebApi.Bots.Apis.Grpc.DeleteChannelResponse { Id = channelId.ToString(), Success = true });
+
+        var result = await _client.DeleteChannelAsync(channelId);
+
+        result.Id.Should().Be(channelId);
+        result.Success.Should().BeTrue();
+        _transportMock.Verify(x => x.DeleteChannelAsync(
+            It.Is<Vc.Backend.WebApi.Bots.Apis.Grpc.DeleteChannelRequest>(r => r.ChannelId == channelId.ToString()),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task DeleteCategoryAsync_ShouldSendCategoryId_AndReturnMappedResult()
+    {
+        var categoryId = Guid.NewGuid();
+        _transportMock.Setup(x => x.DeleteCategoryAsync(It.IsAny<Vc.Backend.WebApi.Bots.Apis.Grpc.DeleteCategoryRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Vc.Backend.WebApi.Bots.Apis.Grpc.DeleteCategoryResponse { Id = categoryId.ToString(), Success = true });
+
+        var result = await _client.DeleteCategoryAsync(categoryId);
+
+        result.Id.Should().Be(categoryId);
+        result.Success.Should().BeTrue();
+        _transportMock.Verify(x => x.DeleteCategoryAsync(
+            It.Is<Vc.Backend.WebApi.Bots.Apis.Grpc.DeleteCategoryRequest>(r => r.CategoryId == categoryId.ToString()),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
     public async Task CreateRoleAsync_ShouldSendGroupIdNameColorAndPermissions_AndReturnMappedRole()
     {
         var groupId = Guid.NewGuid();

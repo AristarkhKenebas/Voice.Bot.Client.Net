@@ -101,8 +101,10 @@ Console.WriteLine($"Logged in as {me.Username} ({me.Id})");
 
 foreach (var group in await client.GetMyGroupsAsync())
 {
-    var test = await client.GetGroupAsync(group.Id);
-    Console.WriteLine($"  in group: {test.Name} ({test.Id})");
+    var groupUsers = await client.GetGroupUsersAsync(group.Id);
+    Console.WriteLine($"  in group: {group.Name} ({group.Id})");
+    foreach (var user in groupUsers)
+        Console.WriteLine($"    {user.Username} ({user.Id})");
 }
 await client.SetStatusAsync(UserStatus.DoNotDisturb);
 await host.WaitForShutdownAsync();

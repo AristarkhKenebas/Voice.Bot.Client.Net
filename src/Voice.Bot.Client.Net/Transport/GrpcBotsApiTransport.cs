@@ -100,8 +100,23 @@ internal sealed class GrpcBotsApiTransport : IBotsApiTransport, IAsyncDisposable
     public Task<BotCategoryInfo> CreateCategoryAsync(CreateCategoryRequest request, CancellationToken ct) =>
         CallAsync(() => _client.CreateCategoryAsync(request, _authHeaders, cancellationToken: ct));
 
+    public Task<BotCategoryInfo> GetCategoryAsync(GetCategoryRequest request, CancellationToken ct) =>
+        CallAsync(() => _client.GetCategoryAsync(request, _authHeaders, cancellationToken: ct));
+
     public Task<BotChannelInfo> CreateChannelAsync(CreateChannelRequest request, CancellationToken ct) =>
         CallAsync(() => _client.CreateChannelAsync(request, _authHeaders, cancellationToken: ct));
+
+    public Task<BotChannelInfo> UpdateChannelAsync(UpdateChannelRequest request, CancellationToken ct) =>
+        CallAsync(() => _client.UpdateChannelAsync(request, _authHeaders, cancellationToken: ct));
+
+    public Task<BotCategoryInfo> UpdateCategoryAsync(UpdateCategoryRequest request, CancellationToken ct) =>
+        CallAsync(() => _client.UpdateCategoryAsync(request, _authHeaders, cancellationToken: ct));
+
+    public Task<DeleteChannelResponse> DeleteChannelAsync(DeleteChannelRequest request, CancellationToken ct) =>
+        CallAsync(() => _client.DeleteChannelAsync(request, _authHeaders, cancellationToken: ct));
+
+    public Task<DeleteCategoryResponse> DeleteCategoryAsync(DeleteCategoryRequest request, CancellationToken ct) =>
+        CallAsync(() => _client.DeleteCategoryAsync(request, _authHeaders, cancellationToken: ct));
 
     public Task<BotRole> CreateRoleAsync(CreateRoleRequest request, CancellationToken ct) =>
         CallAsync(() => _client.CreateRoleAsync(request, _authHeaders, cancellationToken: ct));

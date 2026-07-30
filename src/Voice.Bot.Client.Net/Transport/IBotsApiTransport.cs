@@ -34,7 +34,12 @@ internal interface IBotsApiTransport
     Task RespondToInteractionAsync(RespondToInteractionRequest request, CancellationToken ct);
     Task<MessageInfo> SendInteractionFollowupAsync(SendInteractionFollowupRequest request, CancellationToken ct);
     Task<BotCategoryInfo> CreateCategoryAsync(CreateCategoryRequest request, CancellationToken ct);
+    Task<BotCategoryInfo> GetCategoryAsync(GetCategoryRequest request, CancellationToken ct);
     Task<BotChannelInfo> CreateChannelAsync(CreateChannelRequest request, CancellationToken ct);
+    Task<BotChannelInfo> UpdateChannelAsync(UpdateChannelRequest request, CancellationToken ct);
+    Task<BotCategoryInfo> UpdateCategoryAsync(UpdateCategoryRequest request, CancellationToken ct);
+    Task<DeleteChannelResponse> DeleteChannelAsync(DeleteChannelRequest request, CancellationToken ct);
+    Task<DeleteCategoryResponse> DeleteCategoryAsync(DeleteCategoryRequest request, CancellationToken ct);
     Task<BotRole> CreateRoleAsync(CreateRoleRequest request, CancellationToken ct);
     Task<BotRole> UpdateRoleAsync(UpdateRoleRequest request, CancellationToken ct);
     Task DeleteRoleAsync(DeleteRoleRequest request, CancellationToken ct);
