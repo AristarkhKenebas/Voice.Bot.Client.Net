@@ -1,12 +1,13 @@
-using Voice.Bot.Client.Components;
-using Voice.Bot.Client.Interactions;
-using Voice.Bot.Client.Models;
+using Voice.Bot.Client.Net;
+using Voice.Bot.Client.Net.Components;
+using Voice.Bot.Client.Net.Interactions;
+using Voice.Bot.Client.Net.Models;
 
 namespace Voice.Bot.Client.Sample;
 
 /// <summary>
 /// Demonstrates the typed component/modal builders (<see cref="ComponentBuilder"/>/<see cref="ModalBuilder"/>)
-/// and the bot role/structure management methods on <see cref="Client.BotClient"/> - no hand-written JSON
+/// and the bot role/structure management methods on <see cref="Net.BotClient"/> - no hand-written JSON
 /// anywhere. See docs/message-components.md in the Iopta.Backend repo for the schema these builders
 /// serialize to.
 /// </summary>

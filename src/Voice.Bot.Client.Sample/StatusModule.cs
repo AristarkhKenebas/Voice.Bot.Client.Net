@@ -1,5 +1,6 @@
-using Voice.Bot.Client.Interactions;
-using Voice.Bot.Client.Models;
+using Voice.Bot.Client.Net;
+using Voice.Bot.Client.Net.Interactions;
+using Voice.Bot.Client.Net.Models;
 
 namespace Voice.Bot.Client.Sample;
 

@@ -11,7 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../Voice.Bot.Client/Voice.Bot.Client.csproj" />
+    <ProjectReference Include="..\Voice.Bot.Client.Net\Voice.Bot.Client.Net.csproj" />
   </ItemGroup>
 
   <ItemGroup>

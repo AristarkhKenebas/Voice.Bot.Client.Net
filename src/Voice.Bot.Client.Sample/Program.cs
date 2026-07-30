@@ -1,20 +1,19 @@
-using System.ClientModel;
-using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using OpenAI;
-using OpenAI.Chat;
-using Voice.Bot.Client;
-using Voice.Bot.Client.Extensions;
-using Voice.Bot.Client.Interactions;
-using Voice.Bot.Client.Models;
+using Voice.Bot.Client.Net;
+using Voice.Bot.Client.Net.Commands;
+using Voice.Bot.Client.Net.Extensions;
+using Voice.Bot.Client.Net.Interactions;
+using Voice.Bot.Client.Net.Models;
 
-// End-to-end usage of Voice.Bot.Client: token -> GetMeAsync/GetMyGroupsAsync -> gateway subscribe ->
-// module dispatch (see PingModule) -> SendMessageAsync/RegisterCommandsAsync. Needs a bot with the
-// "Guilds"/"GuildMessages" intents granted by its owner to see/echo messages, and "ApplicationCommands"
-// to register its own slash commands (see BotIntents) - without them the calls below throw
-// BotApiException(PermissionDenied).
+// End-to-end usage of Voice.Bot.Client.Net: token -> GetMeAsync/GetMyGroupsAsync -> gateway subscribe ->
+// module dispatch (see PingModule for slash commands, TextCommandsModule for "!ping"-style prefix
+// commands) -> SendMessageAsync/RegisterCommandsAsync. Needs a bot with the "Guilds"/
+// "GuildMessages" intents granted by its owner to see/echo messages, and "ApplicationCommands" to
+// register its own slash commands (see BotIntents) - without them the calls below throw
+// BotApiException(PermissionDenied). Text commands need no intent beyond "GuildMessages" - they're
+// plain messages, not the Interactions API.
 var builder = Host.CreateApplicationBuilder(args);
 
 builder.Services.AddIoptaBotClient(opts =>
@@ -23,17 +22,24 @@ builder.Services.AddIoptaBotClient(opts =>
         ? token
         : throw new InvalidOperationException("Set BotToken in appsettings.json (or the BotToken environment variable) before running the sample.");
     opts.BotsApiEndpoint = builder.Configuration["BotsApiEndpoint"] ?? opts.BotsApiEndpoint;
-    opts.GatewayEndpoint = builder.Configuration["GatewayEndpoint"] ?? opts.GatewayEndpoint;
-    opts.InteractionsApiEndpoint = builder.Configuration["InteractionsApiEndpoint"] ?? opts.InteractionsApiEndpoint;
     opts.AllowUntrustedCertificates = builder.Configuration.GetValue("AllowUntrustedCertificates", false);
+    opts.TextCommandPrefix = builder.Configuration["TextCommandPrefix"] ?? opts.TextCommandPrefix;
 });
 
 builder.Services.AddInteractionModules();
+builder.Services.AddTextCommandModules();
 
 var host = builder.Build();
 
 var client = host.Services.GetRequiredService<BotClient>();
 var interactions = host.Services.GetRequiredService<InteractionService>();
+var commands = host.Services.GetRequiredService<CommandService>();
+
+commands.CommandExecutionFailed += (ex, message) =>
+{
+    Console.Error.WriteLine($"[text-command error] {message.Content}: {ex}");
+    return Task.CompletedTask;
+};
 
 client.MessageCreated += async message =>
 {
@@ -82,7 +88,7 @@ client.ConnectionError += ex =>
 
 await host.StartAsync();
 
-// Discord.Net-style bulk registration: builds definitions from PingModule's [SlashCommand]/
+// Bulk registration: builds definitions from PingModule's [SlashCommand]/
 // [SlashCommandOption] attributes and reconciles them against what's already registered (deleteMissing
 // defaults to true, so removing a [SlashCommand] method and restarting also deletes it on the backend).
 await interactions.RegisterCommandsAsync();

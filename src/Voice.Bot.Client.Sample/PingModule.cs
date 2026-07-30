@@ -1,4 +1,4 @@
-using Voice.Bot.Client.Interactions;
+using Voice.Bot.Client.Net.Interactions;
 
 namespace Voice.Bot.Client.Sample;
 
