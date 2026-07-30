@@ -1,0 +1,340 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+import "common.proto";
+
+option csharp_namespace = "Vc.Backend.WebApi.Bots.Apis.Grpc";
+
+package bots;
+
+// Self-service API: вызывается самим ботом по bot-токену (см. BotToken auth scheme в
+// Vc.Backend.WebApi.Bots/Authentication), а не его владельцем. Для владельческого управления
+// ботами (Keycloak JWT) см. user_bots.proto / UsersBots. Каждый метод (кроме GetMe) требует
+// соответствующий scope — см. Vc.Common.Helpers.BotScopes и common.Bot.scopes.
+service BotsApi {
+  // Возвращает собственный профиль бота, аутентифицированного по bot-токену. Не требует intent —
+  // идентификация себя не является "действием".
+  rpc GetMe (google.protobuf.Empty) returns (common.Bot);
+
+  // Устанавливает собственный presence-статус бота (ONLINE/OFFLINE/DO_NOT_DISTURB/INVISIBLE) — тот же
+  // UpdateUserStatusCommand, что и у человека (Users.UpdateUserStatus), просто вызванный от лица бота.
+  // Не требует intent, как и GetMe — это тоже действие над собой, а не над чужим пространством.
+  // Изменение статуса вживую (Discord-style) уходит всем участникам групп бота через group-events
+  // (см. Vc.Backend.WebApi.Users/Actors/UserActor.cs, BroadcastStatusChangeAsync).
+  rpc SetStatus (SetStatusRequest) returns (google.protobuf.Empty);
+
+  // Требует scope "voice.join". Выпускает LiveKit-токен для подключения бота к голосовому/медиа
+  // каналу — тот же membership check/Redis/Kafka/LiveKit flow, что и для людей через
+  // ChannelsApi.StartChannelConnection.
+  rpc JoinVoiceChannel (JoinVoiceChannelRequest) returns (JoinVoiceChannelResponse);
+
+  // Требует scope "voice.join". Отключает бота от голосового/медиа канала.
+  rpc LeaveVoiceChannel (LeaveVoiceChannelRequest) returns (google.protobuf.Empty);
+
+  // Требует scope "messages.send". Отправляет текстовое сообщение в текстовый канал от имени бота.
+  rpc SendMessage (SendMessageRequest) returns (MessageInfo);
+
+  // Требует scope "messages.manage". Редактирует ранее отправленное ботом сообщение.
+  rpc UpdateMessage (UpdateMessageRequest) returns (MessageInfo);
+
+  // Требует scope "messages.manage". Удаляет ранее отправленное ботом сообщение.
+  rpc DeleteMessage (DeleteMessageRequest) returns (DeleteMessageResponse);
+
+  // Требует scope "messages.manage". Добавляет emoji-реакцию от лица бота.
+  rpc AddReaction (ReactionRequest) returns (MessageInfo);
+
+  // Требует scope "messages.manage". Убирает emoji-реакцию бота.
+  rpc RemoveReaction (ReactionRequest) returns (MessageInfo);
+
+  // Требует scope "messages.manage". Индикатор "бот печатает" в канале.
+  rpc Typing (TypingRequest) returns (google.protobuf.Empty);
+
+  // Требует scope "messages.manage". Реактивный статус "что бот сейчас делает" (Thinking/Explored/
+  // Processing/Reviewed/Opened/ReSearch/Fetched) — Discord/Claude-style, для случаев когда простого
+  // on/off Typing недостаточно (например пока агент вызывает инструменты перед ответом). Держится у
+  // клиента до следующего SetTyping, до отправки ботом реального сообщения в этот канал (SendMessage
+  // его автоматически снимает) или до серверного safety-net таймаута — явного "снять статус" вызова
+  // нет, см. BotTypingCommand в MessageActor.
+  rpc SetTyping (BotTypingRequest) returns (google.protobuf.Empty);
+
+  // Требует scope "groups.read". Список групп, в которых состоит бот — без этого бот не может
+  // узнать, куда вообще отправлять сообщения/подключаться к каналам.
+  rpc GetMyGroups (google.protobuf.Empty) returns (GetMyGroupsResponse);
+
+  // Требует scope "groups.read". Детали одной группы (категории и каналы), в которой бот состоит.
+  rpc GetGroup (GetGroupRequest) returns (BotGroupDetails);
+
+  // Требует scope "groups.read". Текущие участники группы (common.User, включая ботов с is_bot = true).
+  rpc GetGroupUsers (GetGroupUsersRequest) returns (GetGroupUsersResponse);
+
+  // Требует scope "groups.read". Список ролей группы, отсортированный по позиции ('@everyone'
+  // всегда последняя) — как и для людей (GroupsApi.GetGroupRoles), доступен любому участнику
+  // группы, не только владельцу: список ролей публичен внутри сервера, как в Discord.
+  rpc GetGroupRoles (GetGroupRolesRequest) returns (GetGroupRolesResponse);
+
+  // Требует scope "groups.read". Детали одного канала по его id — полезно, когда известен только
+  // channel_id (например из события гейтвея), без похода за всей группой через GetGroup.
+  rpc GetChannel (GetChannelRequest) returns (BotChannelDetails);
+
+  // Требует scope "interactions.respond". Отвечает на конкретный interaction (slash-команда, клик
+  // по компоненту, сабмит модалки или autocomplete-запрос), полученный ботом через /hubs/bots —
+  // см. Vc.Backend.WebApi.Interactions.InteractionActor, который ждёт этот ответ.
+  rpc RespondToInteraction (RespondToInteractionRequest) returns (google.protobuf.Empty);
+
+  // Требует scope "interactions.respond". Дополнительное сообщение уже ПОСЛЕ начального ответа
+  // (аналог Discord webhook followup) — валидно только в пределах followup-окна interaction'а.
+  rpc SendInteractionFollowup (SendInteractionFollowupRequest) returns (MessageInfo);
+
+  // Требует intent Guilds (та же категория "структура/членство группы", что и GetGroup/GetGroupRoles).
+  // Реальная авторизация - Permissions.ManageChannels через managed-роль бота в GroupActor, как у людей.
+  // Создание группы/сервера ботам намеренно недоступно - только категории/каналы внутри уже
+  // существующей группы, в которой бот состоит.
+  rpc CreateCategory (CreateCategoryRequest) returns (BotCategoryInfo);
+  rpc CreateChannel (CreateChannelRequest) returns (BotChannelInfo);
+
+  // Требует intent Guilds. Реальная авторизация - Permissions.ManageRoles через managed-роль бота;
+  // GroupActor уже проверяет иерархию ролей (нельзя выдать/создать роль выше собственной managed-роли
+  // бота) - тот же путь, что и для людей, никакого спецкейса для ботов.
+  rpc CreateRole (CreateRoleRequest) returns (BotRole);
+  rpc UpdateRole (UpdateRoleRequest) returns (BotRole);
+  rpc DeleteRole (DeleteRoleRequest) returns (google.protobuf.Empty);
+  rpc AssignRole (RoleAssignmentRequest) returns (google.protobuf.Empty);
+  rpc RemoveRole (RoleAssignmentRequest) returns (google.protobuf.Empty);
+}
+
+message SetStatusRequest {
+  common.UserStatus status = 1;
+  optional string StatusText = 2;
+}
+
+message JoinVoiceChannelRequest {
+  string channel_id = 1;
+}
+
+message JoinVoiceChannelResponse {
+  string token = 1;
+  string server_url = 2;
+}
+
+message LeaveVoiceChannelRequest {
+  string channel_id = 1;
+}
+
+message SendMessageRequest {
+  string channel_id = 1;
+  string content = 2;
+  optional string reply_to = 3;
+  // id уже загруженных (статус Uploaded) вложений из сервиса Attachments — см. docs/attachments.md.
+  repeated string attachment_ids = 4;
+  // JSON ActionRow[] (кнопки/select/combobox/checkbox) — см. docs/message-components.md. Опционально,
+  // как и в InteractionResult - опущено/пусто означает "без компонентов".
+  optional string components_json = 5;
+}
+
+message UpdateMessageRequest {
+  string message_id = 1;
+  string content = 2;
+  optional string components_json = 3;
+}
+
+message DeleteMessageRequest {
+  string message_id = 1;
+}
+
+message DeleteMessageResponse {
+  string id = 1;
+  bool success = 2;
+}
+
+message ReactionRequest {
+  string message_id = 1;
+  string emoji = 2;
+}
+
+message TypingRequest {
+  string channel_id = 1;
+  bool is_typing = 2;
+}
+
+message BotTypingRequest {
+  string channel_id = 1;
+  common.BotTypingState state = 2;
+}
+
+message ReactionUsers {
+  repeated string user_ids = 1;
+}
+
+message MessageInfo {
+  string id = 1;
+  string channel_id = 2;
+  string content = 3;
+  string author_id = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp updated_at = 6;
+  bool is_edited = 7;
+  bool is_deleted = 8;
+  string reply_to = 9;
+  map<string, ReactionUsers> reactions = 10;
+  // Set only when this message is a bot's response to a slash-command/component/modal interaction
+  // (Discord-style "used /command" tag) - empty/unset for plain messages.
+  optional string interaction_id = 11;
+  optional string interaction_command_name = 12;
+  optional string interaction_user_id = 13;
+  // JSON ActionRow[] attached to this message, if any — see docs/message-components.md.
+  optional string components_json = 14;
+}
+
+message GetGroupRequest {
+  string group_id = 1;
+}
+
+// Облегчённая проекция группы для списка (GetMyGroups) — без категорий/каналов, см. GetGroup для полной детализации.
+message BotGroupInfo {
+  string id = 1;
+  string owner_id = 2;
+  string name = 3;
+  google.protobuf.Timestamp created_at = 4;
+  string avatar_id = 5;
+  string banner_id = 6;
+}
+
+message GetMyGroupsResponse {
+  repeated BotGroupInfo groups = 1;
+}
+
+message BotChannelInfo {
+  string id = 1;
+  string category_id = 2;
+  string name = 3;
+  // Vc.Common.Types.ChannelType: 0 = Text, 1 = Voice — определяет, какой набор методов BotsApi
+  // применим (SendMessage/... для текстовых, JoinVoiceChannel/... для голосовых).
+  int32 type = 4;
+  string position = 5;
+}
+
+message BotCategoryInfo {
+  string id = 1;
+  string name = 2;
+  string position = 3;
+  repeated BotChannelInfo channels = 4;
+}
+
+message BotGroupDetails {
+  string id = 1;
+  string owner_id = 2;
+  string name = 3;
+  google.protobuf.Timestamp created_at = 4;
+  string avatar_id = 5;
+  string banner_id = 6;
+  repeated BotCategoryInfo categories = 7;
+}
+
+message GetGroupUsersRequest {
+  string group_id = 1;
+}
+
+message GetGroupUsersResponse {
+  repeated common.User users = 1;
+}
+
+message GetGroupRolesRequest {
+  string group_id = 1;
+}
+
+message GetGroupRolesResponse {
+  repeated BotRole roles = 1;
+}
+
+message BotRole {
+  string id = 1;
+  string group_id = 2;
+  string name = 3;
+  string position = 4;
+  string color = 5;
+  repeated int64 permissions = 6;
+}
+
+message CreateCategoryRequest {
+  string group_id = 1;
+  string name = 2;
+}
+
+message CreateChannelRequest {
+  string category_id = 1;
+  string name = 2;
+  int32 type = 3;
+}
+
+message CreateRoleRequest {
+  string group_id = 1;
+  string name = 2;
+  optional string color = 3;
+  repeated int64 permissions = 4;
+}
+
+message UpdateRoleRequest {
+  string role_id = 1;
+  string name = 2;
+  int64 permissions = 3;
+  optional string color = 4;
+}
+
+message DeleteRoleRequest {
+  string role_id = 1;
+}
+
+// AssignRole и RemoveRole принимают ровно один и тот же набор полей - общее сообщение, как в groups.proto.
+message RoleAssignmentRequest {
+  string group_id = 1;
+  string target_user_id = 2;
+  string role_id = 3;
+}
+
+message GetChannelRequest {
+  string channel_id = 1;
+}
+
+message BotChannelDetails {
+  string id = 1;
+  string group_id = 2;
+  string category_id = 3;
+  string name = 4;
+  int32 type = 5;
+  string position = 6;
+}
+
+// Дублирует форму Vc.Backend.Contracts.Commands.Interaction.InteractionResponseKind — proto-протоколы
+// разных микросервисов здесь намеренно не шарятся друг с другом сверх common.proto (см. остальные
+// сервисы), сериализация в реальную команду происходит в BotsApiService.
+enum InteractionResponseKind {
+  CHANNEL_MESSAGE = 0;
+  DEFERRED_CHANNEL_MESSAGE = 1;
+  UPDATE_MESSAGE = 2;
+  DEFERRED_UPDATE_MESSAGE = 3;
+  MODAL = 4;
+  AUTOCOMPLETE_RESULT = 5;
+}
+
+message InteractionChoice {
+  string name = 1;
+  string value = 2;
+}
+
+message RespondToInteractionRequest {
+  string interaction_id = 1;
+  InteractionResponseKind kind = 2;
+  string content = 3;
+  // JSON ActionRow[]/modal-описание — см. doc-комментарий Vc.Backend.WebApi.Interactions.Actors.InteractionActor.
+  string components_json = 4;
+  string modal_json = 5;
+  repeated InteractionChoice autocomplete_choices = 6;
+  bool ephemeral = 7;
+}
+
+message SendInteractionFollowupRequest {
+  string interaction_id = 1;
+  string content = 2;
+  optional string components_json = 3;
+}
