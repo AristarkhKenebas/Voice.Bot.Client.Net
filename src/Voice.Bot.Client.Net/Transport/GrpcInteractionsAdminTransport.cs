@@ -7,8 +7,8 @@ namespace Voice.Bot.Client.Net.Transport;
 /// <summary>
 /// Real <see cref="IInteractionsAdminTransport"/> - wraps the generated
 /// <see cref="InteractionsApi.InteractionsApiClient"/> over a <see cref="GrpcChannel"/> built from
-/// <see cref="BotClientOptions.InteractionsApiEndpoint"/>, same bot-token-as-Bearer and TLS handling
-/// as <see cref="GrpcBotsApiTransport"/>.
+/// <see cref="BotClientOptions.BotsApiEndpoint"/> (Interactions shares the same gateway endpoint as
+/// BotsApi), same bot-token-as-Bearer and TLS handling as <see cref="GrpcBotsApiTransport"/>.
 /// </summary>
 internal sealed class GrpcInteractionsAdminTransport : IInteractionsAdminTransport, IAsyncDisposable
 {

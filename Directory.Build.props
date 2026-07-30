@@ -7,4 +7,10 @@
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
 
+  <!-- Local/dev fallback version. The release workflow overrides this with the pushed git tag
+       via `dotnet pack -p:Version=X.Y.Z`, so this value never actually reaches NuGet.org. -->
+  <PropertyGroup>
+    <VersionPrefix>0.1.0</VersionPrefix>
+  </PropertyGroup>
+
 </Project>

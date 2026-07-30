@@ -4,6 +4,27 @@
     <Description>C# client SDK for writing bots against the Voice messenger's Bots domain.</Description>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <PackageId>Voice.Bot.Client.Net</PackageId>
+    <Authors>Voice-LLC</Authors>
+    <Company>Voice-LLC</Company>
+    <PackageProjectUrl>https://github.com/Voice-LLC/Voice.Bot.Client</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Voice-LLC/Voice.Bot.Client.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>voice;bot;sdk;grpc;signalr;chat</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Grpc.Net.Client" />
     <PackageReference Include="Grpc.Tools" PrivateAssets="All" />
@@ -11,6 +32,7 @@
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>

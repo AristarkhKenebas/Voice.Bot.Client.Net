@@ -4,7 +4,7 @@ using Voice.Bot.Client.Net.Models;
 
 namespace Voice.Bot.Client.Net.Commands;
 
-/// <summary>Wraps the triggering <see cref="GatewayMessage"/> plus the owning <see cref="Client.BotClient"/>, scoping reply calls to its channel.</summary>
+/// <summary>Wraps the triggering <see cref="GatewayMessage"/> plus the owning <see cref="Voice.Bot.Client.Net.BotClient"/>, scoping reply calls to its channel.</summary>
 public sealed class CommandContext
 {
     private readonly BotClient _client;

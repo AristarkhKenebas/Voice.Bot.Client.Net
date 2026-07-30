@@ -21,6 +21,9 @@ public enum BotIntents : ulong
 
     /// <summary>Voice channel presence - JoinVoiceChannel/LeaveVoiceChannel, and channel-events delivery.</summary>
     GuildVoiceStates = 1UL << 2,
+
+    /// <summary>Slash-command self-registration - RegisterCommandAsync/UpdateCommandAsync/DeleteCommandAsync/GetBotCommandsAsync.</summary>
+    ApplicationCommands = 1UL << 3,
 }
 
 public static class BotIntentsExtensions
