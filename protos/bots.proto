@@ -48,12 +48,12 @@ service BotsApi {
   rpc RemoveReaction (ReactionRequest) returns (MessageInfo);
 
   // Требует intent GuildMessages. Последние сообщения канала (аналог MessagesApi.GetChannelMessages
-  // для людей) — даёт боту контекст (историю) канала, а не только реакцию на новые события из Gateway.
-  // Отсортированы от старых к новым; для пагинации назад передавайте id самого старого полученного
-  // сообщения в before_id.
+  // для людей) - позволяет боту получить контекст (историю) канала, а не только реагировать на новые
+  // события из Gateway. Отсортированы от старых к новым; для пагинации назад передавайте id самого
+  // старого полученного сообщения в before_id.
   rpc GetChannelMessages (GetChannelMessagesRequest) returns (GetChannelMessagesResponse);
 
-  // Требует intent GuildMessages. Детали одного сообщения по его id — полезно, когда известен только
+  // Требует intent GuildMessages. Детали одного сообщения по его id - полезно, когда известен только
   // message_id (например из InvokeMessageComponentRequest), без похода за всей историей канала.
   rpc GetMessage (GetMessageRequest) returns (MessageInfo);
 
@@ -75,12 +75,12 @@ service BotsApi {
   // Требует scope "groups.read". Детали одной группы (категории и каналы), в которой бот состоит.
   rpc GetGroup (GetGroupRequest) returns (BotGroupDetails);
 
-  // Требует scope "groups.read". Лёгкий срез GetGroup — только категории (без вложенных каналов).
+  // Требует scope "groups.read". Лёгкий срез GetGroup - только категории (без вложенных каналов).
   // Для бота, которому нужен только список/порядок категорий, без полного дерева.
   rpc GetGroupCategories (GetGroupRequest) returns (GetGroupCategoriesResponse);
 
-  // Требует scope "groups.read". Лёгкий срез GetGroup — плоский список каналов, доступных боту
-  // (с учётом ViewChannels), без per-канального списка "кто сейчас в голосовом канале" — если
+  // Требует scope "groups.read". Лёгкий срез GetGroup - плоский список каналов, доступных боту
+  // (с учётом ViewChannels), без per-канального списка "кто сейчас в голосовом канале" - если
   // нужна только структура, а не live-присутствие, этот вызов дешевле GetGroup.
   rpc GetGroupChannels (GetGroupRequest) returns (GetGroupChannelsResponse);
 
@@ -137,6 +137,18 @@ service BotsApi {
   rpc RemoveRole (RoleAssignmentRequest) returns (google.protobuf.Empty);
 }
 
+enum ChannelType {
+  Unknown = 0;
+  Text = 1;
+  Voice = 2;
+  DirectMessage = 3;
+  GroupMessage = 4;
+  Tribune = 5;
+  Posts = 6;
+  Forum = 7;
+  Events = 8;
+}
+
 message SetStatusRequest {
   common.UserStatus status = 1;
   optional string StatusText = 2;
@@ -186,6 +198,22 @@ message ReactionRequest {
   string emoji = 2;
 }
 
+message GetChannelMessagesRequest {
+  string channel_id = 1;
+  // 1..100 - как и у MessagesApi.GetChannelMessages, значение вне диапазона (включая 0/не указано)
+  // отклоняется валидатором.
+  int32 limit = 2;
+  optional string before_id = 3;
+}
+
+message GetChannelMessagesResponse {
+  repeated MessageInfo messages = 1;
+}
+
+message GetMessageRequest {
+  string message_id = 1;
+}
+
 message TypingRequest {
   string channel_id = 1;
   bool is_typing = 2;
@@ -200,22 +228,6 @@ message ReactionUsers {
   repeated string user_ids = 1;
 }
 
-message GetChannelMessagesRequest {
-  string channel_id = 1;
-  // 1..100 — как и у MessagesApi.GetChannelMessages, значение вне диапазона (включая 0/не указано)
-  // отклоняется валидатором.
-  int32 limit = 2;
-  optional string before_id = 3;
-}
-
-message GetChannelMessagesResponse {
-  repeated MessageInfo messages = 1;
-}
-
-message GetMessageRequest {
-  string message_id = 1;
-}
-
 message MessageInfo {
   string id = 1;
   string channel_id = 2;
@@ -227,12 +239,9 @@ message MessageInfo {
   bool is_deleted = 8;
   string reply_to = 9;
   map<string, ReactionUsers> reactions = 10;
-  // Set only when this message is a bot's response to a slash-command/component/modal interaction
-  // (Discord-style "used /command" tag) - empty/unset for plain messages.
   optional string interaction_id = 11;
   optional string interaction_command_name = 12;
   optional string interaction_user_id = 13;
-  // JSON ActionRow[] attached to this message, if any — see docs/message-components.md.
   optional string components_json = 14;
 }
 
@@ -240,7 +249,6 @@ message GetGroupRequest {
   string group_id = 1;
 }
 
-// Облегчённая проекция группы для списка (GetMyGroups) — без категорий/каналов, см. GetGroup для полной детализации.
 message BotGroupInfo {
   string id = 1;
   string owner_id = 2;
@@ -258,8 +266,6 @@ message BotChannelInfo {
   string id = 1;
   string category_id = 2;
   string name = 3;
-  // Vc.Common.Types.ChannelType: 0 = Text, 1 = Voice — определяет, какой набор методов BotsApi
-  // применим (SendMessage/... для текстовых, JoinVoiceChannel/... для голосовых).
   int32 type = 4;
   string position = 5;
 }
@@ -281,7 +287,7 @@ message BotGroupDetails {
   repeated BotCategoryInfo categories = 7;
 }
 
-// BotCategoryInfo.channels пуст здесь — см. GetGroupChannels для каналов.
+// BotCategoryInfo.channels пуст здесь - см. GetGroupChannels для каналов.
 message GetGroupCategoriesResponse {
   repeated BotCategoryInfo categories = 1;
 }
@@ -376,7 +382,6 @@ message DeleteRoleRequest {
   string role_id = 1;
 }
 
-// AssignRole и RemoveRole принимают ровно один и тот же набор полей - общее сообщение, как в groups.proto.
 message RoleAssignmentRequest {
   string group_id = 1;
   string target_user_id = 2;
@@ -392,13 +397,10 @@ message BotChannelDetails {
   string group_id = 2;
   string category_id = 3;
   string name = 4;
-  int32 type = 5;
+  ChannelType type = 5;
   string position = 6;
 }
 
-// Дублирует форму Vc.Backend.Contracts.Commands.Interaction.InteractionResponseKind — proto-протоколы
-// разных микросервисов здесь намеренно не шарятся друг с другом сверх common.proto (см. остальные
-// сервисы), сериализация в реальную команду происходит в BotsApiService.
 enum InteractionResponseKind {
   CHANNEL_MESSAGE = 0;
   DEFERRED_CHANNEL_MESSAGE = 1;
@@ -417,7 +419,6 @@ message RespondToInteractionRequest {
   string interaction_id = 1;
   InteractionResponseKind kind = 2;
   string content = 3;
-  // JSON ActionRow[]/modal-описание — см. doc-комментарий Vc.Backend.WebApi.Interactions.Actors.InteractionActor.
   string components_json = 4;
   string modal_json = 5;
   repeated InteractionChoice autocomplete_choices = 6;

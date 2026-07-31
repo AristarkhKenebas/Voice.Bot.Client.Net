@@ -8,6 +8,13 @@ namespace Voice.Bot.Client.Net.Models;
 /// </summary>
 public enum ChannelType
 {
-    Text = 0,
-    Voice = 1,
+    Unknown,
+    Text,
+    Voice,
+    DirectMessage,
+    GroupMessage,
+    Tribune,
+    Posts,
+    Forum,
+    Events
 }
