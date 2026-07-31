@@ -9,6 +9,8 @@ using GrpcUpdateChannelRequest = Vc.Backend.WebApi.Bots.Apis.Grpc.UpdateChannelR
 using GrpcUpdateCategoryRequest = Vc.Backend.WebApi.Bots.Apis.Grpc.UpdateCategoryRequest;
 using GrpcDeleteChannelRequest = Vc.Backend.WebApi.Bots.Apis.Grpc.DeleteChannelRequest;
 using GrpcDeleteCategoryRequest = Vc.Backend.WebApi.Bots.Apis.Grpc.DeleteCategoryRequest;
+using GrpcGetUserRequest = Vc.Backend.WebApi.Bots.Apis.Grpc.GetUserRequest;
+using GrpcKickUserRequest = Vc.Backend.WebApi.Bots.Apis.Grpc.KickUserRequest;
 
 namespace Voice.Bot.Client.Net;
 
@@ -40,6 +42,17 @@ public sealed partial class BotClient
 
     public async Task<IReadOnlyList<User>> GetGroupUsersAsync(Guid groupId, CancellationToken ct = default) =>
         (await _transport.GetGroupUsersAsync(new GrpcGetGroupUsersRequest { GroupId = groupId.ToString() }, ct)).Users.Select(u => u.ToModel()).ToList();
+
+    /// <summary>
+    /// Profile of an arbitrary user by id - not restricted to a shared group, unlike <see cref="GetGroupUsersAsync"/>.
+    /// Useful when only a bare id is known (a message's author id, a mentioned user).
+    /// </summary>
+    public async Task<User> GetUserAsync(Guid userId, CancellationToken ct = default) =>
+        (await _transport.GetUserAsync(new GrpcGetUserRequest { UserId = userId.ToString() }, ct)).ToModel();
+
+    /// <summary>Removes a member from a group (requires <c>Guilds</c> intent + <c>KickMembers</c>).</summary>
+    public async Task<KickUserResult> KickUserAsync(Guid groupId, Guid userId, CancellationToken ct = default) =>
+        (await _transport.KickUserAsync(new GrpcKickUserRequest { GroupId = groupId.ToString(), UserId = userId.ToString() }, ct)).ToModel();
 
     public async Task<BotChannelDetails> GetChannelAsync(Guid channelId, CancellationToken ct = default) =>
         (await _transport.GetChannelAsync(new GrpcGetChannelRequest { ChannelId = channelId.ToString() }, ct)).ToModel();

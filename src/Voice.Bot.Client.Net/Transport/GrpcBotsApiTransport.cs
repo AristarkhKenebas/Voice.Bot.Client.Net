@@ -88,6 +88,12 @@ internal sealed class GrpcBotsApiTransport : IBotsApiTransport, IAsyncDisposable
     public Task<GetGroupUsersResponse> GetGroupUsersAsync(GetGroupUsersRequest request, CancellationToken ct) =>
         CallAsync(() => _client.GetGroupUsersAsync(request, _authHeaders, cancellationToken: ct));
 
+    public Task<Vc.Backend.Contracts.Grpc.User> GetUserAsync(GetUserRequest request, CancellationToken ct) =>
+        CallAsync(() => _client.GetUserAsync(request, _authHeaders, cancellationToken: ct));
+
+    public Task<KickUserResponse> KickUserAsync(KickUserRequest request, CancellationToken ct) =>
+        CallAsync(() => _client.KickUserAsync(request, _authHeaders, cancellationToken: ct));
+
     public Task<BotChannelDetails> GetChannelAsync(GetChannelRequest request, CancellationToken ct) =>
         CallAsync(() => _client.GetChannelAsync(request, _authHeaders, cancellationToken: ct));
 

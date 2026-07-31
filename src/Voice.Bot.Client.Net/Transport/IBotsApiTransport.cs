@@ -1,5 +1,6 @@
 using Vc.Backend.WebApi.Bots.Apis.Grpc;
 using GrpcBot = Vc.Backend.Contracts.Grpc.Bot;
+using GrpcUser = Vc.Backend.Contracts.Grpc.User;
 
 namespace Voice.Bot.Client.Net.Transport;
 
@@ -30,6 +31,8 @@ internal interface IBotsApiTransport
     Task<GetGroupCategoriesResponse> GetGroupCategoriesAsync(GetGroupRequest request, CancellationToken ct);
     Task<GetGroupChannelsResponse> GetGroupChannelsAsync(GetGroupRequest request, CancellationToken ct);
     Task<GetGroupUsersResponse> GetGroupUsersAsync(GetGroupUsersRequest request, CancellationToken ct);
+    Task<GrpcUser> GetUserAsync(GetUserRequest request, CancellationToken ct);
+    Task<KickUserResponse> KickUserAsync(KickUserRequest request, CancellationToken ct);
     Task<BotChannelDetails> GetChannelAsync(GetChannelRequest request, CancellationToken ct);
     Task RespondToInteractionAsync(RespondToInteractionRequest request, CancellationToken ct);
     Task<MessageInfo> SendInteractionFollowupAsync(SendInteractionFollowupRequest request, CancellationToken ct);

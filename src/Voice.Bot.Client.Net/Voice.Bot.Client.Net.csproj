@@ -2,6 +2,9 @@
 
   <PropertyGroup>
     <Description>C# client SDK for writing bots against the Voice messenger's Bots domain.</Description>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Version>0.0.1</Version>
+    <PackageLicenseUrl>https://github.com/Voice-LLC/Voice.Bot.Client.Net/blob/master/LICENSE</PackageLicenseUrl>
   </PropertyGroup>
 
   <PropertyGroup>

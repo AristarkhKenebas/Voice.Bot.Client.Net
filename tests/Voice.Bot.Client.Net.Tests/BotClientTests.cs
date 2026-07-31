@@ -384,6 +384,52 @@ public class BotClientTests
     }
 
     [Fact]
+    public async Task GetUserAsync_ShouldSendUserId_AndReturnMappedUser()
+    {
+        var userId = Guid.NewGuid();
+        var response = new GrpcUser
+        {
+            Id = userId.ToString(),
+            Username = "some_user",
+            Email = "some_user@example.com",
+            CreatedAt = Timestamp.FromDateTimeOffset(DateTimeOffset.UtcNow),
+            UpdatedAt = Timestamp.FromDateTimeOffset(DateTimeOffset.UtcNow),
+            LastActivity = Timestamp.FromDateTimeOffset(DateTimeOffset.UtcNow),
+        };
+        _transportMock.Setup(x => x.GetUserAsync(It.IsAny<Vc.Backend.WebApi.Bots.Apis.Grpc.GetUserRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(response);
+
+        var result = await _client.GetUserAsync(userId);
+
+        result.Id.Should().Be(userId);
+        result.Username.Should().Be("some_user");
+        _transportMock.Verify(x => x.GetUserAsync(
+            It.Is<Vc.Backend.WebApi.Bots.Apis.Grpc.GetUserRequest>(r => r.UserId == userId.ToString()),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task KickUserAsync_ShouldSendGroupIdAndUserId_AndReturnMappedResult()
+    {
+        var groupId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        _transportMock.Setup(x => x.KickUserAsync(It.IsAny<Vc.Backend.WebApi.Bots.Apis.Grpc.KickUserRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Vc.Backend.WebApi.Bots.Apis.Grpc.KickUserResponse
+            {
+                GroupId = groupId.ToString(), UserId = userId.ToString(), Success = true
+            });
+
+        var result = await _client.KickUserAsync(groupId, userId);
+
+        result.GroupId.Should().Be(groupId);
+        result.UserId.Should().Be(userId);
+        result.Success.Should().BeTrue();
+        _transportMock.Verify(x => x.KickUserAsync(
+            It.Is<Vc.Backend.WebApi.Bots.Apis.Grpc.KickUserRequest>(r => r.GroupId == groupId.ToString() && r.UserId == userId.ToString()),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
     public async Task GetChannelAsync_ShouldSendChannelId_AndReturnDetails()
     {
         var channelId = Guid.NewGuid();

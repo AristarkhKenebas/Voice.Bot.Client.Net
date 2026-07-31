@@ -87,6 +87,16 @@ service BotsApi {
   // Требует scope "groups.read". Текущие участники группы (common.User, включая ботов с is_bot = true).
   rpc GetGroupUsers (GetGroupUsersRequest) returns (GetGroupUsersResponse);
 
+  // Требует intent Guilds. Профиль произвольного пользователя по его id — без ограничения общей
+  // группой (та же команда/маршрутизация, что и UsersApi.GetMe для людей): полезно, когда у бота
+  // есть только голый id (author_id сообщения, упомянутый пользователь), а не полный common.User.
+  rpc GetUser (GetUserRequest) returns (common.User);
+
+  // Требует intent Guilds. Реальная авторизация - Permissions.KickMembers через managed-роль бота;
+  // GroupActor уже проверяет иерархию (нельзя кикнуть участника с ролью выше/равной своей, владельца
+  // кикнуть нельзя вовсе) - тот же путь, что и для людей, никакого спецкейса для ботов.
+  rpc KickUser (KickUserRequest) returns (KickUserResponse);
+
   // Требует scope "groups.read". Список ролей группы, отсортированный по позиции ('@everyone'
   // всегда последняя) — как и для людей (GroupsApi.GetGroupRoles), доступен любому участнику
   // группы, не только владельцу: список ролей публичен внутри сервера, как в Discord.
@@ -302,6 +312,21 @@ message GetGroupUsersRequest {
 
 message GetGroupUsersResponse {
   repeated common.User users = 1;
+}
+
+message GetUserRequest {
+  string user_id = 1;
+}
+
+message KickUserRequest {
+  string group_id = 1;
+  string user_id = 2;
+}
+
+message KickUserResponse {
+  string group_id = 1;
+  string user_id = 2;
+  bool success = 3;
 }
 
 message GetGroupRolesRequest {

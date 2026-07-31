@@ -182,6 +182,15 @@ var deleted = await client.DeleteChannelAsync(channel.Id);
 Console.WriteLine($"Удалён канал {deleted.Id}, success={deleted.Success}");
 ```
 
+Профиль произвольного пользователя по id и исключение участника из группы — `GetUserAsync`
+(без ограничения общей группой, полезно для голого `author_id` из сообщения) и `KickUserAsync`
+(требует `Permissions.KickMembers`):
+
+```csharp
+var user = await client.GetUserAsync(someUserId);
+var kicked = await client.KickUserAsync(groupId, someUserId);
+```
+
 ## Обработка ошибок
 
 Любой неудачный вызов gRPC-метода выбрасывает `BotApiException` (никогда не «сырой»
