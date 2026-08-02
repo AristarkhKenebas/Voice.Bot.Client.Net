@@ -15,6 +15,7 @@ public sealed class TestInteractionModule : InteractionModuleBase
     public string? LastComponentCapture;
     public string? LastModalFieldValue;
     public bool AutocompleteCalled;
+    public string? LastSelectedValue;
 
     [SlashCommand("ping", "Replies with pong")]
     public Task Ping()
@@ -28,6 +29,15 @@ public sealed class TestInteractionModule : InteractionModuleBase
     {
         LastComponentCapture = id;
         return RespondAsync($"deleted {id}");
+    }
+
+    // Fixed customId (no wildcard) - the shape a select menu/combobox uses, whose choice arrives via
+    // Data.Values rather than a customId capture.
+    [ComponentInteraction("survey:pick")]
+    public Task Pick(string topic)
+    {
+        LastSelectedValue = topic;
+        return RespondAsync($"picked {topic}");
     }
 
     [ModalInteraction("feedback:*")]
@@ -75,19 +85,20 @@ public class InteractionServiceTests
     private static object BuildInteractionPayload(
         Guid interactionId, Guid invokingUserId, Guid channelId, int type,
         string? commandName = null, Dictionary<string, string>? options = null,
-        string? customId = null, string? focusedOption = null, Dictionary<string, string>? modalFields = null) => new
+        string? customId = null, string? focusedOption = null, Dictionary<string, string>? modalFields = null,
+        List<string>? values = null) => new
     {
         InteractionId = interactionId,
         InvokingUserId = invokingUserId,
         ChannelId = channelId,
-        GroupId = (Guid?)null,
+        GroupId = Guid.NewGuid(),
         Type = type,
         Data = new
         {
             CommandName = commandName,
             Options = options ?? new Dictionary<string, string>(),
             CustomId = customId,
-            Values = (List<string>?)null,
+            Values = values,
             FocusedOption = focusedOption,
             ModalFields = modalFields,
         },
@@ -143,6 +154,27 @@ public class InteractionServiceTests
         _module.LastComponentCapture.Should().Be("item-42");
         _transportMock.Verify(x => x.RespondToInteractionAsync(
             It.Is<GrpcRespondToInteractionRequest>(r => r.Content == "deleted item-42"), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>
+    /// Regression test: a select menu/combobox has a fixed customId (no trailing wildcard), so its
+    /// chosen option has to arrive via Data.Values, not a customId capture. Before this fix,
+    /// BuildArguments only ever bound Component-kind handler parameters from the wildcard capture,
+    /// silently leaving them null for exactly this shape - which is why a combobox/select handler's
+    /// parameter always came back empty.
+    /// </summary>
+    [Fact]
+    public async Task Dispatch_MessageComponent_ShouldBindFirstSelectedValue_WhenCustomIdHasNoWildcard()
+    {
+        var payload = BuildInteractionPayload(
+            Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), type: 1,
+            customId: "survey:pick", values: ["backend"]);
+
+        await RaiseAndWaitForRespondAsync(BuildEnvelopeJson(payload, Guid.NewGuid()));
+
+        _module.LastSelectedValue.Should().Be("backend");
+        _transportMock.Verify(x => x.RespondToInteractionAsync(
+            It.Is<GrpcRespondToInteractionRequest>(r => r.Content == "picked backend"), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]

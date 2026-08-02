@@ -37,6 +37,6 @@ public sealed record BotInteractionEvent(
     Guid InteractionId,
     Guid InvokingUserId,
     Guid ChannelId,
-    Guid? GroupId,
+    Guid GroupId,
     InteractionType Type,
     InteractionData Data);

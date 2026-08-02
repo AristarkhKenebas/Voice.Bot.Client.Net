@@ -28,6 +28,9 @@ public sealed class ComponentsDemoModule(BotClient client) : InteractionModuleBa
         return RespondAsync("Click the button to open the form, or pick a topic below.", components: components);
     }
 
+    [ComponentInteraction("survey:pick")]
+    public Task HandleSurveyPick(string topic) => RespondAsync($"You picked {topic}");
+    
     [ComponentInteraction("survey:open")]
     public Task OpenSurveyModal()
     {
@@ -51,18 +54,12 @@ public sealed class ComponentsDemoModule(BotClient client) : InteractionModuleBa
     [SlashCommand("setup-demo", "Create a demo category/channel/role and assign the role to yourself")]
     public async Task SetupDemo()
     {
-        if (Context.Interaction.GroupId is not { } groupId)
-        {
-            await RespondAsync("This command only works inside a group.", ephemeral: true);
-            return;
-        }
-
         await DeferAsync(ephemeral: true);
 
-        var category = await client.CreateCategoryAsync(groupId, "Bot Demo");
+        var category = await client.CreateCategoryAsync(Context.Interaction.GroupId, "Bot Demo");
         var channel = await client.CreateChannelAsync(category.Id, "bot-demo", ChannelType.Text);
-        var role = await client.CreateRoleAsync(groupId, "Bot Demo Role", color: "#5865F2");
-        await client.AssignRoleAsync(groupId, Context.Interaction.InvokingUserId, role.Id);
+        var role = await client.CreateRoleAsync(Context.Interaction.GroupId, "Bot Demo Role", color: "#5865F2");
+        await client.AssignRoleAsync(Context.Interaction.GroupId, Context.Interaction.InvokingUserId, role.Id);
 
         await FollowupAsync($"Created category '{category.Name}', channel '{channel.Name}', and assigned role '{role.Name}' to you.");
     }

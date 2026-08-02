@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Reflection;
 using Voice.Bot.Client.Net.Events;
 using Voice.Bot.Client.Net.Internal;
@@ -91,7 +92,13 @@ public sealed partial class InteractionService
             string? raw = handler.Kind switch
             {
                 HandlerKind.SlashCommand => GetOrDefault(interaction.Data.Options, name),
-                HandlerKind.Component => wildcardCapture,
+                // A button's customId pattern usually carries the payload as a trailing wildcard
+                // (e.g. "delete:*" -> capture). A select/combobox customId is normally a fixed string
+                // with no wildcard at all - its payload instead travels in Data.Values (the option(s)
+                // the user picked), so that's the fallback once there's no wildcard capture to use.
+                // Only the first selected value is bound here; a handler that needs every value for a
+                // multi-select component should read interaction.Data.Values directly via the context.
+                HandlerKind.Component => wildcardCapture ?? interaction.Data.Values?.FirstOrDefault(),
                 HandlerKind.Modal => GetOrDefault(interaction.Data.ModalFields, name) ?? wildcardCapture,
                 HandlerKind.Autocomplete => GetOrDefault(interaction.Data.Options, name) ?? interaction.Data.FocusedOption,
                 _ => null,

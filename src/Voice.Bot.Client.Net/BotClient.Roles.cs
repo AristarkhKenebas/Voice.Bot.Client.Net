@@ -11,11 +11,11 @@ public sealed partial class BotClient
 {
     /// <summary>Creates a role in a group this bot belongs to.</summary>
     public async Task<BotRole> CreateRoleAsync(
-        Guid groupId, string name, string? color = null, IReadOnlyCollection<long>? permissions = null, CancellationToken ct = default)
+        Guid groupId, string name, string? color = null, long permissions = 0, CancellationToken ct = default)
     {
         var request = new GrpcCreateRoleRequest { GroupId = groupId.ToString(), Name = name };
         if (color is not null) request.Color = color;
-        if (permissions is not null) request.Permissions.AddRange(permissions);
+        request.Permissions = permissions;
 
         return (await _transport.CreateRoleAsync(request, ct)).ToModel();
     }

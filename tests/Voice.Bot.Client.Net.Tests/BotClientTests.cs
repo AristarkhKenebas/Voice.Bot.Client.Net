@@ -633,13 +633,13 @@ public class BotClientTests
         _transportMock.Setup(x => x.CreateRoleAsync(It.IsAny<Vc.Backend.WebApi.Bots.Apis.Grpc.CreateRoleRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Vc.Backend.WebApi.Bots.Apis.Grpc.BotRole { Id = roleId.ToString(), GroupId = groupId.ToString(), Name = "Muted", Position = "a", Color = "#5865F2" });
 
-        var result = await _client.CreateRoleAsync(groupId, "Muted", "#5865F2", [1]);
+        var result = await _client.CreateRoleAsync(groupId, "Muted", "#5865F2", 1);
 
         result.Id.Should().Be(roleId);
         result.Name.Should().Be("Muted");
         _transportMock.Verify(x => x.CreateRoleAsync(
             It.Is<Vc.Backend.WebApi.Bots.Apis.Grpc.CreateRoleRequest>(r =>
-                r.GroupId == groupId.ToString() && r.Name == "Muted" && r.Color == "#5865F2" && r.Permissions.Contains(1)),
+                r.GroupId == groupId.ToString() && r.Name == "Muted" && r.Color == "#5865F2" && r.Permissions == 1),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 

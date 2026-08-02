@@ -364,7 +364,7 @@ public class GatewayEventParsingTests
             InteractionId = interactionId,
             InvokingUserId = invokingUserId,
             ChannelId = channelId,
-            GroupId = (Guid?)null,
+            GroupId = Guid.NewGuid(),
             Type = 0, // ApplicationCommand
             Data = new
             {

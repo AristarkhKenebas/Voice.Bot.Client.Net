@@ -9,7 +9,7 @@ public sealed record BotRole(
     string Name,
     string Position,
     string Color,
-    IReadOnlyList<long> Permissions);
+    long Permissions);
 
 internal static class BotRoleExtensions
 {
@@ -19,5 +19,5 @@ internal static class BotRoleExtensions
         grpc.Name,
         grpc.Position,
         grpc.Color,
-        grpc.Permissions.ToList());
+        grpc.Permissions);
 }
