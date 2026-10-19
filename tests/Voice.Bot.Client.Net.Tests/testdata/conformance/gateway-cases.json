@@ -1,0 +1,1017 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "description": "every message field set",
+      "envelope": {
+        "GroupId": "g1",
+        "PayloadJson": "{\"Id\": \"m1\", \"ChannelId\": \"ch1\", \"Content\": \"Hi <@bot1>\", \"CreatedAt\": \"2026-05-01T10:00:00Z\", \"UpdatedAt\": \"2026-05-01T10:05:00.5\", \"IsEdited\": true, \"ReplyTo\": \"m0\", \"ReplyToAuthorId\": \"\", \"ForwardedFrom\": \"\", \"Author\": {\"Id\": \"u1\", \"Username\": \"anna\", \"DisplayName\": \"Anna\", \"PresenceStatus\": 0, \"IsBot\": false}, \"Reactions\": {\"👍\": [\"u1\", \"u2\"]}, \"Attachments\": [{\"Id\": \"a1\", \"UploaderId\": \"u1\", \"FileName\": \"cat.png\", \"ContentType\": \"image/png\", \"SizeBytes\": 10, \"Status\": \"Uploaded\", \"DownloadUrl\": \"https://s/a1\"}], \"Mentions\": [{\"Id\": \"bot1\", \"Username\": \"bot\", \"IsBot\": true}], \"MentionChannels\": [{\"Id\": \"ch2\", \"Name\": \"general\", \"Type\": 0, \"GroupId\": \"g1\"}], \"MentionRoles\": [{\"Id\": \"r1\", \"Name\": \"mods\", \"Color\": 255}], \"MentionEveryone\": true, \"MentionHere\": false, \"InteractionId\": \"i1\", \"InteractionCommandName\": \"ping\", \"InteractionUserId\": \"u1\"}",
+        "Timestamp": 1760000000000,
+        "Type": "MessageCreated"
+      },
+      "expected": {
+        "event": "MessageCreated",
+        "fields": {
+          "groupId": "g1",
+          "message": {
+            "attachments": [
+              {
+                "contentType": "image/png",
+                "downloadUrl": "https://s/a1",
+                "fileName": "cat.png",
+                "id": "a1",
+                "sizeBytes": 10,
+                "status": "uploaded",
+                "uploaderId": "u1"
+              }
+            ],
+            "author": {
+              "avatarUrl": null,
+              "bannerUrl": null,
+              "bot": false,
+              "createdAt": null,
+              "description": null,
+              "displayName": "Anna",
+              "id": "u1",
+              "status": "online",
+              "statusText": null,
+              "username": "anna"
+            },
+            "channelId": "ch1",
+            "componentsJson": null,
+            "content": "Hi <@bot1>",
+            "createdAt": "2026-05-01T10:00:00.000Z",
+            "deleted": false,
+            "edited": true,
+            "forwardedFrom": null,
+            "id": "m1",
+            "interaction": {
+              "commandName": "ping",
+              "id": "i1",
+              "userId": "u1"
+            },
+            "mentionedChannels": [
+              {
+                "groupId": "g1",
+                "id": "ch2",
+                "name": "general",
+                "type": "text"
+              }
+            ],
+            "mentionedRoles": [
+              {
+                "color": 255,
+                "id": "r1",
+                "name": "mods"
+              }
+            ],
+            "mentions": [
+              {
+                "avatarUrl": null,
+                "bot": true,
+                "displayName": null,
+                "id": "bot1",
+                "username": "bot"
+              }
+            ],
+            "mentionsEveryone": true,
+            "mentionsHere": false,
+            "reactions": {
+              "👍": [
+                "u1",
+                "u2"
+              ]
+            },
+            "replyTo": "m0",
+            "replyToAuthorId": null,
+            "updatedAt": "2026-05-01T10:05:00.500Z"
+          }
+        }
+      },
+      "name": "message_created_full",
+      "topic": "chat-events"
+    },
+    {
+      "description": "keys in camelCase are read too",
+      "envelope": {
+        "groupId": "g1",
+        "payloadJson": "{\"id\": \"m2\", \"channelId\": \"ch1\", \"content\": \"x\", \"author\": {\"id\": \"u1\", \"isBot\": true}}",
+        "type": "MessageCreated"
+      },
+      "expected": {
+        "event": "MessageCreated",
+        "fields": {
+          "groupId": "g1",
+          "message": {
+            "attachments": [],
+            "author": {
+              "avatarUrl": null,
+              "bannerUrl": null,
+              "bot": true,
+              "createdAt": null,
+              "description": null,
+              "displayName": null,
+              "id": "u1",
+              "status": "unknown",
+              "statusText": null,
+              "username": null
+            },
+            "channelId": "ch1",
+            "componentsJson": null,
+            "content": "x",
+            "createdAt": null,
+            "deleted": false,
+            "edited": false,
+            "forwardedFrom": null,
+            "id": "m2",
+            "interaction": null,
+            "mentionedChannels": [],
+            "mentionedRoles": [],
+            "mentions": [],
+            "mentionsEveryone": false,
+            "mentionsHere": false,
+            "reactions": {},
+            "replyTo": null,
+            "replyToAuthorId": null,
+            "updatedAt": null
+          }
+        }
+      },
+      "name": "message_created_camel_case",
+      "topic": "chat-events"
+    },
+    {
+      "description": "missing fields fall back to defaults",
+      "envelope": {
+        "GroupId": "g1",
+        "PayloadJson": "{}",
+        "Timestamp": 1760000000000,
+        "Type": "MessageCreated"
+      },
+      "expected": {
+        "event": "MessageCreated",
+        "fields": {
+          "groupId": "g1",
+          "message": {
+            "attachments": [],
+            "author": {
+              "avatarUrl": null,
+              "bannerUrl": null,
+              "bot": false,
+              "createdAt": null,
+              "description": null,
+              "displayName": null,
+              "id": null,
+              "status": "unknown",
+              "statusText": null,
+              "username": null
+            },
+            "channelId": null,
+            "componentsJson": null,
+            "content": null,
+            "createdAt": null,
+            "deleted": false,
+            "edited": false,
+            "forwardedFrom": null,
+            "id": null,
+            "interaction": null,
+            "mentionedChannels": [],
+            "mentionedRoles": [],
+            "mentions": [],
+            "mentionsEveryone": false,
+            "mentionsHere": false,
+            "reactions": {},
+            "replyTo": null,
+            "replyToAuthorId": null,
+            "updatedAt": null
+          }
+        }
+      },
+      "name": "message_created_empty_payload",
+      "topic": "chat-events"
+    },
+    {
+      "description": "a non-object payload counts as empty",
+      "envelope": {
+        "GroupId": "g1",
+        "PayloadJson": "[1,2]",
+        "Timestamp": 1760000000000,
+        "Type": "MessageCreated"
+      },
+      "expected": {
+        "event": "MessageCreated",
+        "fields": {
+          "groupId": "g1",
+          "message": {
+            "attachments": [],
+            "author": {
+              "avatarUrl": null,
+              "bannerUrl": null,
+              "bot": false,
+              "createdAt": null,
+              "description": null,
+              "displayName": null,
+              "id": null,
+              "status": "unknown",
+              "statusText": null,
+              "username": null
+            },
+            "channelId": null,
+            "componentsJson": null,
+            "content": null,
+            "createdAt": null,
+            "deleted": false,
+            "edited": false,
+            "forwardedFrom": null,
+            "id": null,
+            "interaction": null,
+            "mentionedChannels": [],
+            "mentionedRoles": [],
+            "mentions": [],
+            "mentionsEveryone": false,
+            "mentionsHere": false,
+            "reactions": {},
+            "replyTo": null,
+            "replyToAuthorId": null,
+            "updatedAt": null
+          }
+        }
+      },
+      "name": "message_created_array_payload",
+      "topic": "chat-events"
+    },
+    {
+      "description": "an unparsable time is null",
+      "envelope": {
+        "GroupId": "g1",
+        "PayloadJson": "{\"Id\": \"m3\", \"CreatedAt\": \"yesterday\"}",
+        "Timestamp": 1760000000000,
+        "Type": "MessageCreated"
+      },
+      "expected": {
+        "event": "MessageCreated",
+        "fields": {
+          "groupId": "g1",
+          "message": {
+            "attachments": [],
+            "author": {
+              "avatarUrl": null,
+              "bannerUrl": null,
+              "bot": false,
+              "createdAt": null,
+              "description": null,
+              "displayName": null,
+              "id": null,
+              "status": "unknown",
+              "statusText": null,
+              "username": null
+            },
+            "channelId": null,
+            "componentsJson": null,
+            "content": null,
+            "createdAt": null,
+            "deleted": false,
+            "edited": false,
+            "forwardedFrom": null,
+            "id": "m3",
+            "interaction": null,
+            "mentionedChannels": [],
+            "mentionedRoles": [],
+            "mentions": [],
+            "mentionsEveryone": false,
+            "mentionsHere": false,
+            "reactions": {},
+            "replyTo": null,
+            "replyToAuthorId": null,
+            "updatedAt": null
+          }
+        }
+      },
+      "name": "message_created_bad_time",
+      "topic": "chat-events"
+    },
+    {
+      "description": ".NET times: 7 fraction digits, no offset means UTC",
+      "envelope": {
+        "GroupId": "g1",
+        "PayloadJson": "{\"Id\": \"m4\", \"CreatedAt\": \"2026-05-01T10:00:00.1234567\", \"UpdatedAt\": \"2026-01-01T00:00:00+03:00\"}",
+        "Timestamp": 1760000000000,
+        "Type": "MessageCreated"
+      },
+      "expected": {
+        "event": "MessageCreated",
+        "fields": {
+          "groupId": "g1",
+          "message": {
+            "attachments": [],
+            "author": {
+              "avatarUrl": null,
+              "bannerUrl": null,
+              "bot": false,
+              "createdAt": null,
+              "description": null,
+              "displayName": null,
+              "id": null,
+              "status": "unknown",
+              "statusText": null,
+              "username": null
+            },
+            "channelId": null,
+            "componentsJson": null,
+            "content": null,
+            "createdAt": "2026-05-01T10:00:00.123Z",
+            "deleted": false,
+            "edited": false,
+            "forwardedFrom": null,
+            "id": "m4",
+            "interaction": null,
+            "mentionedChannels": [],
+            "mentionedRoles": [],
+            "mentions": [],
+            "mentionsEveryone": false,
+            "mentionsHere": false,
+            "reactions": {},
+            "replyTo": null,
+            "replyToAuthorId": null,
+            "updatedAt": "2025-12-31T21:00:00.000Z"
+          }
+        }
+      },
+      "name": "message_created_dotnet_time",
+      "topic": "chat-events"
+    },
+    {
+      "description": "empty optional strings mean absent",
+      "envelope": {
+        "GroupId": "g1",
+        "PayloadJson": "{\"Id\": \"m5\", \"InteractionId\": \"\", \"ComponentsJson\": \"\", \"ForwardedFrom\": \"\", \"ReplyTo\": \"\"}",
+        "Timestamp": 1760000000000,
+        "Type": "MessageCreated"
+      },
+      "expected": {
+        "event": "MessageCreated",
+        "fields": {
+          "groupId": "g1",
+          "message": {
+            "attachments": [],
+            "author": {
+              "avatarUrl": null,
+              "bannerUrl": null,
+              "bot": false,
+              "createdAt": null,
+              "description": null,
+              "displayName": null,
+              "id": null,
+              "status": "unknown",
+              "statusText": null,
+              "username": null
+            },
+            "channelId": null,
+            "componentsJson": null,
+            "content": null,
+            "createdAt": null,
+            "deleted": false,
+            "edited": false,
+            "forwardedFrom": null,
+            "id": "m5",
+            "interaction": null,
+            "mentionedChannels": [],
+            "mentionedRoles": [],
+            "mentions": [],
+            "mentionsEveryone": false,
+            "mentionsHere": false,
+            "reactions": {},
+            "replyTo": null,
+            "replyToAuthorId": null,
+            "updatedAt": null
+          }
+        }
+      },
+      "name": "message_created_blank_optionals",
+      "topic": "chat-events"
+    },
+    {
+      "description": "",
+      "envelope": {
+        "GroupId": "g1",
+        "PayloadJson": "{\"Id\": \"m1\", \"ChannelId\": \"ch1\", \"Content\": \"edited\", \"IsEdited\": true}",
+        "Timestamp": 1760000000000,
+        "Type": "MessageUpdated"
+      },
+      "expected": {
+        "event": "MessageUpdated",
+        "fields": {
+          "groupId": "g1",
+          "message": {
+            "attachments": [],
+            "author": {
+              "avatarUrl": null,
+              "bannerUrl": null,
+              "bot": false,
+              "createdAt": null,
+              "description": null,
+              "displayName": null,
+              "id": null,
+              "status": "unknown",
+              "statusText": null,
+              "username": null
+            },
+            "channelId": "ch1",
+            "componentsJson": null,
+            "content": "edited",
+            "createdAt": null,
+            "deleted": false,
+            "edited": true,
+            "forwardedFrom": null,
+            "id": "m1",
+            "interaction": null,
+            "mentionedChannels": [],
+            "mentionedRoles": [],
+            "mentions": [],
+            "mentionsEveryone": false,
+            "mentionsHere": false,
+            "reactions": {},
+            "replyTo": null,
+            "replyToAuthorId": null,
+            "updatedAt": null
+          }
+        }
+      },
+      "name": "message_updated",
+      "topic": "chat-events"
+    },
+    {
+      "description": "",
+      "envelope": {
+        "ChatId": "ch1",
+        "GroupId": "g1",
+        "PayloadJson": "{\"Id\": \"m1\"}",
+        "Timestamp": 1760000000000,
+        "Type": "MessageDeleted"
+      },
+      "expected": {
+        "event": "MessageDeleted",
+        "fields": {
+          "channelId": "ch1",
+          "groupId": "g1",
+          "messageId": "m1"
+        }
+      },
+      "name": "message_deleted_payload",
+      "topic": "chat-events"
+    },
+    {
+      "description": "message id from the envelope when the payload has none",
+      "envelope": {
+        "ChatId": "ch1",
+        "GroupId": "g1",
+        "MessageId": "m2",
+        "PayloadJson": "",
+        "Timestamp": 1760000000000,
+        "Type": "MessageDeleted"
+      },
+      "expected": {
+        "event": "MessageDeleted",
+        "fields": {
+          "channelId": "ch1",
+          "groupId": "g1",
+          "messageId": "m2"
+        }
+      },
+      "name": "message_deleted_envelope",
+      "topic": "chat-events"
+    },
+    {
+      "description": "",
+      "envelope": {
+        "GroupId": "g1",
+        "PayloadJson": "{\"MessageId\": \"m1\", \"ChannelId\": \"ch1\", \"UserId\": \"u2\", \"Emoji\": \"🔥\", \"Reactions\": {\"🔥\": [\"u2\"]}}",
+        "Timestamp": 1760000000000,
+        "Type": "MessageReactionAdded"
+      },
+      "expected": {
+        "event": "ReactionAdded",
+        "fields": {
+          "channelId": "ch1",
+          "emoji": "🔥",
+          "groupId": "g1",
+          "messageId": "m1",
+          "reactions": {
+            "🔥": [
+              "u2"
+            ]
+          },
+          "userId": "u2"
+        }
+      },
+      "name": "reaction_added",
+      "topic": "chat-events"
+    },
+    {
+      "description": "",
+      "envelope": {
+        "GroupId": "g1",
+        "PayloadJson": "{\"MessageId\": \"m1\", \"ChannelId\": \"ch1\", \"UserId\": \"u2\", \"Emoji\": \"🔥\", \"Reactions\": {}}",
+        "Timestamp": 1760000000000,
+        "Type": "MessageReactionRemoved"
+      },
+      "expected": {
+        "event": "ReactionRemoved",
+        "fields": {
+          "channelId": "ch1",
+          "emoji": "🔥",
+          "groupId": "g1",
+          "messageId": "m1",
+          "reactions": {},
+          "userId": "u2"
+        }
+      },
+      "name": "reaction_removed",
+      "topic": "chat-events"
+    },
+    {
+      "description": "",
+      "envelope": {
+        "GroupId": "g1",
+        "PayloadJson": "{\"ChannelId\": \"ch1\", \"UserId\": \"u1\", \"Username\": \"anna\", \"IsTyping\": true}",
+        "Timestamp": 1760000000000,
+        "Type": "UserTyping"
+      },
+      "expected": {
+        "event": "UserTyping",
+        "fields": {
+          "channelId": "ch1",
+          "groupId": "g1",
+          "typing": true,
+          "userId": "u1",
+          "username": "anna"
+        }
+      },
+      "name": "user_typing",
+      "topic": "chat-events"
+    },
+    {
+      "description": "enum by name, case and underscores ignored",
+      "envelope": {
+        "GroupId": "g1",
+        "PayloadJson": "{\"ChannelId\": \"ch1\", \"BotId\": \"b1\", \"State\": \"Re_Search\", \"IsActive\": true}",
+        "Timestamp": 1760000000000,
+        "Type": "BotTyping"
+      },
+      "expected": {
+        "event": "BotTyping",
+        "fields": {
+          "active": true,
+          "botId": "b1",
+          "channelId": "ch1",
+          "groupId": "g1",
+          "state": "re_search",
+          "username": null
+        }
+      },
+      "name": "bot_typing_string_state",
+      "topic": "chat-events"
+    },
+    {
+      "description": "enum by number",
+      "envelope": {
+        "GroupId": "g1",
+        "PayloadJson": "{\"ChannelId\": \"ch1\", \"BotId\": \"b1\", \"State\": 1, \"IsActive\": false}",
+        "Timestamp": 1760000000000,
+        "Type": "BotTyping"
+      },
+      "expected": {
+        "event": "BotTyping",
+        "fields": {
+          "active": false,
+          "botId": "b1",
+          "channelId": "ch1",
+          "groupId": "g1",
+          "state": "explored",
+          "username": null
+        }
+      },
+      "name": "bot_typing_number_state",
+      "topic": "chat-events"
+    },
+    {
+      "description": "unknown enum value",
+      "envelope": {
+        "GroupId": "g1",
+        "PayloadJson": "{\"State\": 99}",
+        "Timestamp": 1760000000000,
+        "Type": "BotTyping"
+      },
+      "expected": {
+        "event": "BotTyping",
+        "fields": {
+          "active": false,
+          "botId": null,
+          "channelId": null,
+          "groupId": "g1",
+          "state": "unknown",
+          "username": null
+        }
+      },
+      "name": "bot_typing_unknown_state",
+      "topic": "chat-events"
+    },
+    {
+      "description": "",
+      "envelope": {
+        "GroupId": "g1",
+        "PayloadJson": "{\"Id\": \"g1\", \"OwnerId\": \"o1\", \"Name\": \"Club\", \"AccessType\": \"InviteOnly\", \"VerificationLevel\": 2, \"CreatedAt\": \"2026-01-01T00:00:00+03:00\", \"Categories\": [{\"Id\": \"c1\", \"Name\": \"Text\", \"Channels\": [{\"Id\": \"ch1\", \"CategoryId\": \"c1\", \"Name\": \"general\", \"Type\": 1, \"Users\": [{\"Id\": \"u2\", \"Username\": \"bob\"}]}]}]}",
+        "Timestamp": 1760000000000,
+        "Type": "ChannelCreated"
+      },
+      "expected": {
+        "event": "GroupStructureChanged",
+        "fields": {
+          "group": {
+            "accessType": "invite_only",
+            "avatarId": null,
+            "bannerId": null,
+            "categories": [
+              {
+                "channels": [
+                  {
+                    "categoryId": "c1",
+                    "id": "ch1",
+                    "name": "general",
+                    "position": null,
+                    "type": "voice",
+                    "users": [
+                      {
+                        "avatarId": null,
+                        "bot": false,
+                        "description": null,
+                        "displayName": null,
+                        "id": "u2",
+                        "status": "unknown",
+                        "statusText": null,
+                        "username": "bob"
+                      }
+                    ]
+                  }
+                ],
+                "id": "c1",
+                "name": "Text",
+                "position": null
+              }
+            ],
+            "createdAt": "2025-12-31T21:00:00.000Z",
+            "id": "g1",
+            "name": "Club",
+            "ownerId": "o1",
+            "verificationLevel": "medium"
+          },
+          "groupId": "g1",
+          "type": "ChannelCreated"
+        }
+      },
+      "name": "group_structure_changed",
+      "topic": "group-events"
+    },
+    {
+      "description": "",
+      "envelope": {
+        "GroupId": "g1",
+        "PayloadJson": "{\"Id\": \"g1\", \"Name\": \"Club\"}",
+        "Timestamp": 1760000000000,
+        "Type": "UserJoined",
+        "UserId": "u5"
+      },
+      "expected": {
+        "event": "MemberJoined",
+        "fields": {
+          "group": {
+            "accessType": "unknown",
+            "avatarId": null,
+            "bannerId": null,
+            "categories": [],
+            "createdAt": null,
+            "id": "g1",
+            "name": "Club",
+            "ownerId": null,
+            "verificationLevel": "unknown"
+          },
+          "groupId": "g1",
+          "userId": "u5"
+        }
+      },
+      "name": "member_joined",
+      "topic": "group-events"
+    },
+    {
+      "description": "",
+      "envelope": {
+        "GroupId": "g1",
+        "PayloadJson": "",
+        "Timestamp": 1760000000000,
+        "Type": "UserLeft",
+        "UserId": "u5"
+      },
+      "expected": {
+        "event": "MemberLeft",
+        "fields": {
+          "group": null,
+          "groupId": "g1",
+          "userId": "u5"
+        }
+      },
+      "name": "member_left_no_snapshot",
+      "topic": "group-events"
+    },
+    {
+      "description": "",
+      "envelope": {
+        "GroupId": "g1",
+        "PayloadJson": "{\"UserId\": \"u6\"}",
+        "Timestamp": 1760000000000,
+        "Type": "UserKicked"
+      },
+      "expected": {
+        "event": "MemberKicked",
+        "fields": {
+          "group": null,
+          "groupId": "g1",
+          "userId": "u6"
+        }
+      },
+      "name": "member_kicked",
+      "topic": "group-events"
+    },
+    {
+      "description": "",
+      "envelope": {
+        "GroupId": "g1",
+        "PayloadJson": "{\"DisplayName\": \"New\", \"PresenceStatus\": \"DoNotDisturb\", \"LastActivity\": \"2026-02-02T12:00:00\"}",
+        "Timestamp": 1760000000000,
+        "Type": "UserProfileUpdated",
+        "UserId": "u1"
+      },
+      "expected": {
+        "event": "UserProfileUpdated",
+        "fields": {
+          "avatarId": null,
+          "bannerId": null,
+          "description": null,
+          "displayName": "New",
+          "groupId": "g1",
+          "lastActivity": "2026-02-02T12:00:00.000Z",
+          "status": "do_not_disturb",
+          "statusText": null,
+          "userId": "u1"
+        }
+      },
+      "name": "user_profile_updated",
+      "topic": "group-events"
+    },
+    {
+      "description": "",
+      "envelope": {
+        "GroupId": "g1",
+        "PayloadJson": "{\"PresenceStatus\": 1, \"Status\": \"lunch\"}",
+        "Timestamp": 1760000000000,
+        "Type": "UserStatusChanged",
+        "UserId": "u1"
+      },
+      "expected": {
+        "event": "UserStatusChanged",
+        "fields": {
+          "groupId": "g1",
+          "lastActivity": null,
+          "status": "offline",
+          "statusText": "lunch",
+          "userId": "u1"
+        }
+      },
+      "name": "user_status_changed",
+      "topic": "group-events"
+    },
+    {
+      "description": "user id from the envelope",
+      "envelope": {
+        "ChatId": "ch1",
+        "GroupId": "g1",
+        "PayloadJson": "{\"Username\": \"anna\"}",
+        "Timestamp": 1760000000000,
+        "Type": "UserConnected",
+        "UserId": "u1"
+      },
+      "expected": {
+        "event": "VoiceConnected",
+        "fields": {
+          "channelId": "ch1",
+          "groupId": "g1",
+          "user": {
+            "avatarId": null,
+            "bot": false,
+            "description": null,
+            "displayName": null,
+            "id": "u1",
+            "status": "unknown",
+            "statusText": null,
+            "username": "anna"
+          }
+        }
+      },
+      "name": "voice_connected",
+      "topic": "channel-events"
+    },
+    {
+      "description": "",
+      "envelope": {
+        "ChatId": "ch1",
+        "GroupId": "g1",
+        "PayloadJson": "{\"Id\": \"u2\"}",
+        "Timestamp": 1760000000000,
+        "Type": "UserDisconnected"
+      },
+      "expected": {
+        "event": "VoiceDisconnected",
+        "fields": {
+          "channelId": "ch1",
+          "groupId": "g1",
+          "user": {
+            "avatarId": null,
+            "bot": false,
+            "description": null,
+            "displayName": null,
+            "id": "u2",
+            "status": "unknown",
+            "statusText": null,
+            "username": null
+          }
+        }
+      },
+      "name": "voice_disconnected",
+      "topic": "channel-events"
+    },
+    {
+      "description": "option values become strings, names keep their case",
+      "envelope": {
+        "GroupId": "g1",
+        "PayloadJson": "{\"InteractionId\": \"i1\", \"Type\": 0, \"InvokingUserId\": \"u1\", \"ChannelId\": \"ch1\", \"GroupId\": \"g1\", \"Data\": {\"CommandName\": \"weather\", \"Options\": {\"City\": \"Berlin\", \"days\": 3}}}",
+        "Timestamp": 1760000000000,
+        "Type": "InteractionCreated"
+      },
+      "expected": {
+        "event": "InteractionCreated",
+        "fields": {
+          "interaction": {
+            "channelId": "ch1",
+            "commandName": "weather",
+            "customId": null,
+            "focusedOption": null,
+            "groupId": "g1",
+            "id": "i1",
+            "modalFields": {},
+            "options": {
+              "City": "Berlin",
+              "days": "3"
+            },
+            "type": "application_command",
+            "userId": "u1",
+            "values": []
+          }
+        }
+      },
+      "name": "interaction_slash",
+      "topic": "interaction-events"
+    },
+    {
+      "description": "options as a list, focused option as an object",
+      "envelope": {
+        "GroupId": "g1",
+        "PayloadJson": "{\"interactionId\": \"i2\", \"type\": \"ApplicationCommandAutocomplete\", \"data\": {\"options\": [{\"name\": \"city\", \"value\": \"Be\"}], \"focusedOption\": {\"name\": \"city\"}}}",
+        "Timestamp": 1760000000000,
+        "Type": "InteractionCreated"
+      },
+      "expected": {
+        "event": "InteractionCreated",
+        "fields": {
+          "interaction": {
+            "channelId": null,
+            "commandName": null,
+            "customId": null,
+            "focusedOption": "city",
+            "groupId": "g1",
+            "id": "i2",
+            "modalFields": {},
+            "options": {
+              "city": "Be"
+            },
+            "type": "autocomplete",
+            "userId": null,
+            "values": []
+          }
+        }
+      },
+      "name": "interaction_autocomplete",
+      "topic": "interaction-events"
+    },
+    {
+      "description": "null values dropped",
+      "envelope": {
+        "GroupId": "g1",
+        "PayloadJson": "{\"InteractionId\": \"i3\", \"Type\": \"MessageComponent\", \"Data\": {\"CustomId\": \"vote:yes\", \"Values\": [\"a\", null, \"b\"]}}",
+        "Timestamp": 1760000000000,
+        "Type": "InteractionCreated"
+      },
+      "expected": {
+        "event": "InteractionCreated",
+        "fields": {
+          "interaction": {
+            "channelId": null,
+            "commandName": null,
+            "customId": "vote:yes",
+            "focusedOption": null,
+            "groupId": "g1",
+            "id": "i3",
+            "modalFields": {},
+            "options": {},
+            "type": "message_component",
+            "userId": null,
+            "values": [
+              "a",
+              "b"
+            ]
+          }
+        }
+      },
+      "name": "interaction_component",
+      "topic": "interaction-events"
+    },
+    {
+      "description": "",
+      "envelope": {
+        "GroupId": "g1",
+        "PayloadJson": "{\"InteractionId\": \"i4\", \"Type\": 42}",
+        "Timestamp": 1760000000000,
+        "Type": "InteractionCreated"
+      },
+      "expected": {
+        "event": "InteractionCreated",
+        "fields": {
+          "interaction": {
+            "channelId": null,
+            "commandName": null,
+            "customId": null,
+            "focusedOption": null,
+            "groupId": "g1",
+            "id": "i4",
+            "modalFields": {},
+            "options": {},
+            "type": "unknown",
+            "userId": null,
+            "values": []
+          }
+        }
+      },
+      "name": "interaction_unknown_type",
+      "topic": "interaction-events"
+    },
+    {
+      "description": "unknown types are kept with the raw payload",
+      "envelope": {
+        "GroupId": "g1",
+        "PayloadJson": "{\"x\":1}",
+        "Timestamp": 1760000000000,
+        "Type": "ChannelPermissionsChanged"
+      },
+      "expected": {
+        "event": "UnknownEvent",
+        "fields": {
+          "groupId": "g1",
+          "payloadJson": "{\"x\":1}",
+          "topic": "channel-events",
+          "type": "ChannelPermissionsChanged"
+        }
+      },
+      "name": "unknown_event_type",
+      "topic": "channel-events"
+    },
+    {
+      "description": "",
+      "envelope": {
+        "GroupId": "g1",
+        "PayloadJson": "{}",
+        "Timestamp": 1760000000000,
+        "Type": "Anything"
+      },
+      "expected": {
+        "event": "UnknownEvent",
+        "fields": {
+          "groupId": "g1",
+          "payloadJson": "{}",
+          "topic": "other-topic",
+          "type": "Anything"
+        }
+      },
+      "name": "unknown_topic",
+      "topic": "other-topic"
+    }
+  ],
+  "reference": "Generated by the Go SDK parser, then reviewed: interactions take groupId from the envelope when the payload has none."
+}

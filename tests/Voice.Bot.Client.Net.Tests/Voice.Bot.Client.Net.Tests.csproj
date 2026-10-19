@@ -10,11 +10,16 @@
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" />
     <PackageReference Include="FluentAssertions" />
-    <PackageReference Include="Moq" />
+    <PackageReference Include="Grpc.AspNetCore" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="testdata\**\*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Voice.Bot.Client.Net\Voice.Bot.Client.Net.csproj" />
+    <ProjectReference Include="..\..\src\Voice.Bot.Client.Net.Testing\Voice.Bot.Client.Net.Testing.csproj" />
   </ItemGroup>
 
 </Project>

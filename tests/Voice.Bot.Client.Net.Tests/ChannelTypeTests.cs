@@ -23,6 +23,7 @@ public class ChannelTypeTests
     [InlineData(ChannelType.Posts, 5)]
     [InlineData(ChannelType.Forum, 6)]
     [InlineData(ChannelType.Events, 7)]
+    [InlineData(ChannelType.Board, 8)]
     public void ChannelType_ShouldMatchBackendWireValue(ChannelType type, int expectedWireValue)
     {
         ((int)type).Should().Be(expectedWireValue);
