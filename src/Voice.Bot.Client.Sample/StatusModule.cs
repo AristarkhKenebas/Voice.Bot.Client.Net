@@ -4,42 +4,43 @@ using Voice.Bot.Client.Net.Models;
 
 namespace Voice.Bot.Client.Sample;
 
-public class StatusModule(BotClient client) : InteractionModuleBase
+/// <summary>Changes the bot's presence and builds some structure in the group the command was used in.</summary>
+public sealed class StatusModule(BotClient client) : InteractionModuleBase
 {
-    [SlashCommand("status", "Replies with the bot's status")]
-    public async Task ChangeStatus([SlashCommandOption("Status", Required = true)] string status)
+    [SlashCommand("status", "Changes the bot's status: online, dnd, invisible or offline")]
+    public async Task ChangeStatus([SlashCommandOption("online, dnd, invisible or offline", Required = true)] string status)
     {
-        switch (status)
+        UserStatus? parsed = status switch
         {
-            case "dnd":
-                await client.SetStatusAsync(UserStatus.DoNotDisturb, "I'm busy");
-                await RespondAsync("Do not disturb");
-                break;
-            case "online":
-                await client.SetStatusAsync(UserStatus.Online, "Playing with the API");
-                await RespondAsync("Online");
-                break;
-            case "offline":
-                await client.SetStatusAsync(UserStatus.Offline);
-                await RespondAsync("Offline");
-                break;
-            case "online-test":
-                await client.SetStatusAsync(UserStatus.Online);
-                await RespondAsync("OnlineTest");
-                break;
-            default:
-                await RespondAsync("Invalid status");
-                break;
+            "online" => UserStatus.Online,
+            "dnd" => UserStatus.DoNotDisturb,
+            "invisible" => UserStatus.Invisible,
+            "offline" => UserStatus.Offline,
+            _ => null,
+        };
+        if (parsed is not { } value)
+        {
+            await ReplyAsync("Unknown status - use online, dnd, invisible or offline.");
+            return;
         }
+
+        await client.SetStatusAsync(value);
+        await ReplyAsync($"Status is now {value}.");
     }
 
-    [SlashCommand("question", "Ask a question Opencode")]
-    public async Task Question([SlashCommandOption("Question", Required = true)] string question)
+    /// <summary>Creates a category, a text channel and a role in the command's group and gives the role to the caller.</summary>
+    [SlashCommand("setup-demo", "Create a demo category, channel and role and assign the role to yourself")]
+    [GroupOnly]
+    [BotHasPermissions(Permissions.ManageChannels | Permissions.ManageRoles)]
+    public async Task SetupDemo()
     {
-        await client.SetTypingAsync(BotTypingState.Thinking, Context.Interaction.ChannelId);
-        await Task.Delay(TimeSpan.FromSeconds(1));
-        await client.SetTypingAsync(BotTypingState.Explored, Context.Interaction.ChannelId);
-        await Task.Delay(TimeSpan.FromSeconds(1));
-        await RespondAsync("Opencode: " + question + "aadsasdlkjasdlkjasdlkjasdkljaspodjaspjodas[kod");
+        var groupId = Context.GroupId!.Value;
+        await using var typing = Context.BeginTyping();
+        var category = await client.CreateCategoryAsync(groupId, "Bot Demo");
+        var channel = await client.CreateChannelAsync(category.Id, "bot-demo", ChannelType.Text);
+        var role = await client.CreateRoleAsync(groupId, "Bot Demo Role", color: "#5865F2");
+        await client.AssignRoleAsync(groupId, Context.Interaction.InvokingUserId, role.Id);
+
+        await ReplyAsync($"Created category '{category.Name}', channel '{channel.Name}' and gave you the role '{role.Name}'.");
     }
 }

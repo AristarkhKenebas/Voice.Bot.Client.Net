@@ -1,110 +1,51 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Voice.Bot.Client.Net;
-using Voice.Bot.Client.Net.Commands;
 using Voice.Bot.Client.Net.Extensions;
-using Voice.Bot.Client.Net.Interactions;
 using Voice.Bot.Client.Net.Models;
+using Voice.Bot.Client.Sample;
 
-// End-to-end usage of Voice.Bot.Client.Net: token -> GetMeAsync/GetMyGroupsAsync -> gateway subscribe ->
-// module dispatch (see PingModule for slash commands, TextCommandsModule for "!ping"-style prefix
-// commands) -> SendMessageAsync/RegisterCommandsAsync. Needs a bot with the "Guilds"/
-// "GuildMessages" intents granted by its owner to see/echo messages, and "ApplicationCommands" to
-// register its own slash commands (see BotIntents) - without them the calls below throw
-// BotApiException(PermissionDenied). Text commands need no intent beyond "GuildMessages" - they're
-// plain messages, not the Interactions API.
+// End-to-end usage of Voice.Bot.Client.Net on the generic host: the token comes from appsettings.json or
+// the VOICE_BOT_TOKEN environment variable; starting the host connects the gateway, syncs the [SlashCommand]
+// methods (PingModule, StatusModule, ModerationModule) and starts the prefix commands (TextCommandsModule).
+// Ctrl+C / SIGTERM stop it. A bot without a required permission gets BotApiException(PermissionDenied)
+// from the API - the command framework answers "I don't have permission to do that." for you.
 var builder = Host.CreateApplicationBuilder(args);
 
-builder.Services.AddIoptaBotClient(opts =>
-{
-    opts.BotToken = builder.Configuration["BotToken"] is { Length: > 0 } token
-        ? token
-        : throw new InvalidOperationException("Set BotToken in appsettings.json (or the BotToken environment variable) before running the sample.");
-    opts.BotsApiEndpoint = builder.Configuration["BotsApiEndpoint"] ?? opts.BotsApiEndpoint;
-    opts.AllowUntrustedCertificates = builder.Configuration.GetValue("AllowUntrustedCertificates", false);
-    opts.TextCommandPrefix = builder.Configuration["TextCommandPrefix"] ?? opts.TextCommandPrefix;
-});
-
-builder.Services.AddInteractionModules();
-builder.Services.AddTextCommandModules();
+builder.Services
+    .AddVoiceBotClient(opts =>
+    {
+        opts.BotToken = builder.Configuration["BotToken"] ?? "";
+        opts.Endpoint = builder.Configuration["Endpoint"] ?? opts.Endpoint;
+        opts.AllowUntrustedCertificates = builder.Configuration.GetValue("AllowUntrustedCertificates", false);
+        if (builder.Configuration["TextCommandPrefix"] is { Length: > 0 } prefix) opts.TextCommandPrefix = prefix;
+        opts.Replies.Error = "Oops, something went wrong.";
+    })
+    .AddInteractionModules()
+    .AddTextCommandModules()
+    .AddBotModule<WelcomeModule>();
 
 var host = builder.Build();
 
 var client = host.Services.GetRequiredService<BotClient>();
-var interactions = host.Services.GetRequiredService<InteractionService>();
-var commands = host.Services.GetRequiredService<CommandService>();
+var logger = host.Services.GetRequiredService<ILogger<Program>>();
 
-commands.CommandExecutionFailed += (ex, message) =>
+client.OnReady(async me =>
 {
-    Console.Error.WriteLine($"[text-command error] {message.Content}: {ex}");
+    logger.LogInformation("Logged in as {Username} ({Id})", me.Username, me.Id);
+    await client.SetStatusAsync(UserStatus.Online);
+    foreach (var group in await client.Cache.GetGroupsAsync())
+    {
+        logger.LogInformation("In group {Name} ({Id})", group.Name, group.Id);
+    }
+});
+
+client.OnMessage(ctx =>
+{
+    logger.LogInformation("[{Channel}] {Author}: {Content}", ctx.ChannelId, ctx.Author.Username, ctx.Message.Content);
     return Task.CompletedTask;
-};
+});
 
-client.MessageCreated += async message =>
-{
-    if (message.Author.IsBot) return;
-    
-    Console.WriteLine($"[message-created] {message.ChannelId} {message.Content}");
-};
-
-client.InteractionCreated += interactionEvent =>
-{
-    Console.WriteLine($"[interaction-created] {interactionEvent.InteractionId}");
-    return Task.CompletedTask;
-};
-
-client.UserJoinedGroup += joined =>
-{
-    Console.WriteLine($"[group-events] joined group {joined.Group.Name} ({joined.GroupId})");
-    return Task.CompletedTask;
-};
-
-client.UserStatusChanged += changed =>
-{
-    Console.WriteLine($"[group-events] {changed.UserId} is now {changed.PresenceStatus} (group {changed.GroupId})");
-    return Task.CompletedTask;
-};
-
-client.BotTyping += typing =>
-{
-    Console.WriteLine(typing.IsActive
-        ? $"[chat-events] {typing.Username} is {typing.State} in {typing.ChannelId}"
-        : $"[chat-events] {typing.Username} stopped in {typing.ChannelId}");
-    return Task.CompletedTask;
-};
-
-client.UnhandledEvent += evt =>
-{
-    Console.WriteLine($"[unhandled] {evt.Topic}/{evt.Type}");
-    return Task.CompletedTask;
-};
-
-client.ConnectionError += ex =>
-{
-    Console.Error.WriteLine($"[gateway error] {ex}");
-    return Task.CompletedTask;
-};
-
-await host.StartAsync();
-
-// Bulk registration: builds definitions from PingModule's [SlashCommand]/
-// [SlashCommandOption] attributes and reconciles them against what's already registered (deleteMissing
-// defaults to true, so removing a [SlashCommand] method and restarting also deletes it on the backend).
-await interactions.RegisterCommandsAsync();
-
-// Live presence, broadcast to every group this bot is in - no intent required, same as GetMeAsync.
-
-var me = await client.GetMeAsync();
-
-Console.WriteLine($"Logged in as {me.Username} ({me.Id})");
-
-foreach (var group in await client.GetMyGroupsAsync())
-{
-    var groupUsers = await client.GetGroupUsersAsync(group.Id);
-    Console.WriteLine($"  in group: {group.Name} ({group.Id})");
-    foreach (var user in groupUsers)
-        Console.WriteLine($"    {user.Username} ({user.Id})");
-}
-await client.SetStatusAsync(UserStatus.DoNotDisturb);
-await host.WaitForShutdownAsync();
+await host.RunAsync();
