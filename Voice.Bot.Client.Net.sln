@@ -18,6 +18,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "common", "common", "{9ADFD2
 		README.md = README.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Voice.Bot.Client.Net.Testing", "src\Voice.Bot.Client.Net.Testing\Voice.Bot.Client.Net.Testing.csproj", "{23B0EC3D-A594-4FCA-ADFC-A424E0809C1D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -64,6 +66,18 @@ Global
 		{9A6BB748-12D3-4DA8-8648-B1505EDD44DC}.Release|x64.Build.0 = Release|Any CPU
 		{9A6BB748-12D3-4DA8-8648-B1505EDD44DC}.Release|x86.ActiveCfg = Release|Any CPU
 		{9A6BB748-12D3-4DA8-8648-B1505EDD44DC}.Release|x86.Build.0 = Release|Any CPU
+		{23B0EC3D-A594-4FCA-ADFC-A424E0809C1D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{23B0EC3D-A594-4FCA-ADFC-A424E0809C1D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{23B0EC3D-A594-4FCA-ADFC-A424E0809C1D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{23B0EC3D-A594-4FCA-ADFC-A424E0809C1D}.Debug|x64.Build.0 = Debug|Any CPU
+		{23B0EC3D-A594-4FCA-ADFC-A424E0809C1D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{23B0EC3D-A594-4FCA-ADFC-A424E0809C1D}.Debug|x86.Build.0 = Debug|Any CPU
+		{23B0EC3D-A594-4FCA-ADFC-A424E0809C1D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{23B0EC3D-A594-4FCA-ADFC-A424E0809C1D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{23B0EC3D-A594-4FCA-ADFC-A424E0809C1D}.Release|x64.ActiveCfg = Release|Any CPU
+		{23B0EC3D-A594-4FCA-ADFC-A424E0809C1D}.Release|x64.Build.0 = Release|Any CPU
+		{23B0EC3D-A594-4FCA-ADFC-A424E0809C1D}.Release|x86.ActiveCfg = Release|Any CPU
+		{23B0EC3D-A594-4FCA-ADFC-A424E0809C1D}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -72,5 +86,6 @@ Global
 		{F71D9841-5B6D-423D-A813-7ACAC9CD9C52} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{8EAD0FCB-AFB3-4391-81D2-E6FCDF8A37D7} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{9A6BB748-12D3-4DA8-8648-B1505EDD44DC} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{23B0EC3D-A594-4FCA-ADFC-A424E0809C1D} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal

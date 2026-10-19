@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Testing kit for Voice.Bot.Client.Net bots: an in-memory fake Voice server to simulate messages and slash commands and check what the bot sent, without a network.</Description>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>Voice.Bot.Client.Net.Testing</PackageId>
+    <Authors>Voice-LLC</Authors>
+    <Company>Voice-LLC</Company>
+    <PackageProjectUrl>https://github.com/Voice-LLC/Voice.Bot.Client.Net</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Voice-LLC/Voice.Bot.Client.Net.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>voice;bot;sdk;testing;fake</PackageTags>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1573</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Voice.Bot.Client.Net\Voice.Bot.Client.Net.csproj" />
+  </ItemGroup>
+
+</Project>

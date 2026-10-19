@@ -43,11 +43,10 @@ jobs:
         run: dotnet test Voice.Bot.Client.Net.sln --configuration Release --no-build
 
       - name: Pack
-        run: >
-          dotnet pack src/Voice.Bot.Client.Net/Voice.Bot.Client.Net.csproj
-          --configuration Release --no-build
-          -p:Version=${{ steps.version.outputs.version }}
-          -o artifacts
+        run: |
+          for project in src/Voice.Bot.Client.Net/Voice.Bot.Client.Net.csproj src/Voice.Bot.Client.Net.Testing/Voice.Bot.Client.Net.Testing.csproj; do
+            dotnet pack "$project" --configuration Release --no-build -p:Version=${{ steps.version.outputs.version }} -o artifacts
+          done
 
       - uses: actions/upload-artifact@v4
         with:
