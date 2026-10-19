@@ -3,9 +3,7 @@ using System.Reflection;
 namespace Voice.Bot.Client.Net.Extensions;
 
 /// <summary>
-/// Recorded by <see cref="ServiceCollectionExtensions.AddInteractionModules"/> - multiple registrations
-/// (one per call, e.g. across assemblies) are resolved as
-/// <c>IEnumerable&lt;InteractionModuleAssemblyRegistration&gt;</c> by <see cref="BotClientHostedService"/>
-/// at startup, once an <see cref="Interactions.InteractionService"/> instance exists to scan into.
+/// Recorded by <see cref="ServiceCollectionExtensions.AddInteractionModules"/>, one per call. The <see cref="Interactions.InteractionService"/>
+/// factory scans every recorded assembly when the service is first resolved.
 /// </summary>
 internal sealed record InteractionModuleAssemblyRegistration(Assembly Assembly);

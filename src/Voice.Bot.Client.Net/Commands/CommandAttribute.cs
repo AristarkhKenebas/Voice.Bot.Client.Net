@@ -8,5 +8,19 @@ namespace Voice.Bot.Client.Net.Commands;
 [AttributeUsage(AttributeTargets.Method)]
 public sealed class CommandAttribute(string name) : Attribute
 {
+    private RunMode? _runMode;
+
     public string Name { get; } = name;
+
+    /// <summary>What the command does, shown by the built-in <c>help</c> command.</summary>
+    public string? Description { get; set; }
+
+    /// <summary>Where the handler runs; <see cref="BotClientOptions.DefaultRunMode"/> when not set.</summary>
+    public RunMode RunMode
+    {
+        get => _runMode ?? RunMode.Sync;
+        set => _runMode = value;
+    }
+
+    internal RunMode? ExplicitRunMode => _runMode;
 }

@@ -1,31 +1,27 @@
-using Voice.Bot.Client.Net.Components;
 using Voice.Bot.Client.Net.Models;
 
 namespace Voice.Bot.Client.Net.Interactions;
 
 /// <summary>
-/// Base class for interaction modules. <see cref="InteractionService"/> instantiates one of these per
-/// incoming interaction it dispatches and sets <see cref="Context"/> before invoking the matching
-/// attributed method.
+/// Base class for slash-command modules. <see cref="InteractionService"/> instantiates one of these per
+/// incoming command it dispatches and sets <see cref="Context"/> before invoking the matching
+/// <c>[SlashCommand]</c>-attributed method. Checks such as <c>[GroupOnly]</c> or <c>[Cooldown]</c> on the
+/// class apply to all of its commands.
 /// </summary>
 public abstract class InteractionModuleBase
 {
     public InteractionContext Context { get; internal set; } = null!;
 
-    protected Task RespondAsync(string content, bool ephemeral = false, ComponentBuilder? components = null) =>
-        Context.RespondAsync(content, ephemeral, components);
+    /// <summary>Posts a message to the channel the command was used in.</summary>
+    protected Task<Message> ReplyAsync(string content) => Context.ReplyAsync(content);
 
-    protected Task DeferAsync(bool ephemeral = false) => Context.DeferAsync(ephemeral);
+    /// <summary>Posts a message with files, uploaded first, to the channel the command was used in.</summary>
+    protected Task<Message> ReplyAsync(string content, IEnumerable<FileUpload> files) => Context.ReplyAsync(content, files);
 
-    protected Task UpdateAsync(string content, ComponentBuilder? components = null) => Context.UpdateAsync(content, components);
-
-    protected Task RespondWithModalAsync(string modalJson) => Context.RespondWithModalAsync(modalJson);
-
-    protected Task RespondWithModalAsync(ModalBuilder modal) => Context.RespondWithModalAsync(modal);
-
-    protected Task RespondWithAutocompleteAsync(IReadOnlyList<(string Name, string Value)> choices) =>
-        Context.RespondWithAutocompleteAsync(choices);
-
-    protected Task<MessageInfo> FollowupAsync(string content, ComponentBuilder? components = null) =>
-        Context.FollowupAsync(content, components);
+    /// <summary>
+    /// Called when one of this module's commands throws. Return <c>true</c> when it's handled - then the
+    /// service neither raises <see cref="InteractionService.HandlerFailed"/> nor sends the default error
+    /// reply. <see cref="BotContext.CommandName"/> tells which command failed.
+    /// </summary>
+    protected internal virtual Task<bool> OnErrorAsync(Exception error) => Task.FromResult(false);
 }

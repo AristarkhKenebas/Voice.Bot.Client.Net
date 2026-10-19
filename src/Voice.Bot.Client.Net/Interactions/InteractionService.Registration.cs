@@ -7,70 +7,46 @@ namespace Voice.Bot.Client.Net.Interactions;
 public sealed partial class InteractionService
 {
     /// <summary>
-    /// Command registration: builds one command definition per registered
-    /// <c>[SlashCommand]</c>-attributed module method (name/description from the attribute, options
-    /// from <c>[SlashCommandOption]</c>-decorated parameters - see <see cref="GetEffectiveOptionName"/>
-    /// for how option names stay consistent with dispatch-time binding), resolves the bot's own id via
-    /// <c>GetMeAsync</c>, and reconciles against what's already registered: registers commands that
-    /// don't exist yet, updates ones whose name/description/options changed, and - when
-    /// <paramref name="deleteMissing"/> - deletes registered commands no module declares anymore. This
-    /// is the closest equivalent to Discord's actual bulk-overwrite semantics that the per-command CRUD
-    /// API here allows. Requires the bot's own <see cref="Intents.BotIntents.ApplicationCommands"/> intent.
+    /// Builds one command definition per registered <c>[SlashCommand]</c> method (name, description and
+    /// default permissions from the attribute, options from <c>[SlashCommandOption]</c> parameters - see
+    /// <see cref="GetEffectiveOptionName"/> for how option names stay consistent with dispatch-time
+    /// binding) and reconciles them with what's registered via <see cref="BotClient.SyncCommandsAsync"/>:
+    /// registers new commands, updates changed ones and - when <paramref name="deleteMissing"/> - deletes
+    /// commands no module declares anymore.
     /// </summary>
-    public async Task RegisterCommandsAsync(bool deleteMissing = true, CancellationToken ct = default)
+    /// <exception cref="InvalidOperationException">
+    /// No module is registered and <paramref name="deleteMissing"/> is set - syncing would delete every command.
+    /// </exception>
+    public Task<CommandSyncResult> RegisterCommandsAsync(bool deleteMissing = true, CancellationToken ct = default)
     {
-        var me = await _client.GetMeAsync(ct).ConfigureAwait(false);
-        var declared = _handlers.Where(h => h.Kind == HandlerKind.SlashCommand).Select(BuildDeclaredCommand).ToList();
-        var existing = await _client.GetBotCommandsAsync(me.Id, ct).ConfigureAwait(false);
-        var existingByName = existing.ToDictionary(c => c.Name);
-
-        foreach (var command in declared)
+        if (_handlers.Count == 0 && deleteMissing)
         {
-            if (existingByName.TryGetValue(command.Name, out var existingCommand))
-            {
-                if (!IsSameDefinition(existingCommand, command))
-                {
-                    await _client.UpdateCommandAsync(me.Id, existingCommand.Id, command.Name, command.Description, command.Options, ct: ct)
-                        .ConfigureAwait(false);
-                }
-            }
-            else
-            {
-                await _client.RegisterCommandAsync(me.Id, command.Name, command.Description, command.Options, ct: ct).ConfigureAwait(false);
-            }
+            throw new InvalidOperationException(
+                "No [SlashCommand] methods are registered, so syncing would delete every command. Add modules first, or pass deleteMissing: false.");
         }
 
-        if (deleteMissing)
-        {
-            var declaredNames = declared.Select(d => d.Name).ToHashSet();
-            foreach (var stale in existing.Where(e => !declaredNames.Contains(e.Name)))
-            {
-                await _client.DeleteCommandAsync(me.Id, stale.Id, ct).ConfigureAwait(false);
-            }
-        }
+        return _client.SyncCommandsAsync(_handlers.Select(BuildDefinition).ToList(), deleteMissing, ct);
     }
 
-    private static (string Name, string Description, IReadOnlyList<CommandOptionDefinition> Options) BuildDeclaredCommand(RegisteredHandler handler)
+    private static CommandDefinition BuildDefinition(RegisteredHandler handler)
     {
         var attribute = handler.Method.GetCustomAttribute<SlashCommandAttribute>()!;
         var options = handler.Method.GetParameters()
             .Select(p => (Parameter: p, Option: p.GetCustomAttribute<SlashCommandOptionAttribute>()))
             .Where(x => x.Option is not null)
             .Select(x => new CommandOptionDefinition(
-                GetEffectiveOptionName(x.Parameter), x.Option!.Description, InferOptionType(x.Parameter.ParameterType), x.Option.Required, x.Option.Autocomplete))
+                GetEffectiveOptionName(x.Parameter), x.Option!.Description, x.Option.ExplicitType ?? InferOptionType(x.Parameter.ParameterType), x.Option.Required))
             .ToList();
 
-        return (attribute.Name, attribute.Description, options);
+        return new CommandDefinition(attribute.Name, attribute.Description, options, attribute.DefaultMemberPermissions);
     }
 
     private static CommandOptionType InferOptionType(Type clrType)
     {
-        if (clrType == typeof(int) || clrType == typeof(long)) return CommandOptionType.Integer;
-        if (clrType == typeof(bool)) return CommandOptionType.Boolean;
-        if (clrType == typeof(double)) return CommandOptionType.Number;
+        var type = Nullable.GetUnderlyingType(clrType) ?? clrType;
+        if (type == typeof(int) || type == typeof(long)) return CommandOptionType.Integer;
+        if (type == typeof(bool)) return CommandOptionType.Boolean;
+        if (type == typeof(double) || type == typeof(decimal) || type == typeof(float)) return CommandOptionType.Number;
         return CommandOptionType.String;
     }
-
-    private static bool IsSameDefinition(BotCommandDefinition existing, (string Name, string Description, IReadOnlyList<CommandOptionDefinition> Options) declared) =>
-        existing.Description == declared.Description && existing.Options.SequenceEqual(declared.Options);
 }

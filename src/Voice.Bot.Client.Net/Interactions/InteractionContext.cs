@@ -1,47 +1,33 @@
-using Voice.Bot.Client.Net.Components;
 using Voice.Bot.Client.Net.Events;
 using Voice.Bot.Client.Net.Models;
 
 namespace Voice.Bot.Client.Net.Interactions;
 
-/// <summary>Wraps one <see cref="BotInteractionEvent"/> plus the owning <see cref="BotClient"/>, scoping every response call to it.</summary>
-public sealed class InteractionContext
+/// <summary>Wraps one <see cref="BotInteractionEvent"/> plus the owning <see cref="BotClient"/>.</summary>
+/// <remarks>
+/// The current API has no way to answer an interaction directly, so a command handler replies by
+/// posting a regular message to the channel the command was used in - see <see cref="BotContext.ReplyAsync(string, CancellationToken)"/>.
+/// </remarks>
+public sealed class InteractionContext : BotContext
 {
-    private readonly BotClient _client;
-
     public BotInteractionEvent Interaction { get; }
 
+    /// <summary>The option values by name, as the user typed them.</summary>
+    public IReadOnlyDictionary<string, string> Options => Interaction.Data.Options;
+
+    /// <inheritdoc />
+    public override bool IsSlash => true;
+
+    /// <inheritdoc />
+    public override Guid? MessageId => null;
+
     internal InteractionContext(BotClient client, BotInteractionEvent interaction)
+        : base(client, interaction.InvokingUserId, interaction.ChannelId, interaction.GroupId, interaction.Data.CommandName)
     {
-        _client = client;
         Interaction = interaction;
     }
 
-    public Task RespondAsync(string content, bool ephemeral = false, ComponentBuilder? components = null) =>
-        _client.RespondToInteractionAsync(
-            Interaction.InteractionId,
-            new InteractionResponse(InteractionResponseKind.ChannelMessage, Content: content, ComponentsJson: components?.Build(), Ephemeral: ephemeral));
-
-    public Task DeferAsync(bool ephemeral = false) =>
-        _client.RespondToInteractionAsync(
-            Interaction.InteractionId, new InteractionResponse(InteractionResponseKind.DeferredChannelMessage, Ephemeral: ephemeral));
-
-    /// <summary>For <see cref="InteractionType.MessageComponent"/> handlers - edits the message the component is attached to.</summary>
-    public Task UpdateAsync(string content, ComponentBuilder? components = null) =>
-        _client.RespondToInteractionAsync(
-            Interaction.InteractionId,
-            new InteractionResponse(InteractionResponseKind.UpdateMessage, Content: content, ComponentsJson: components?.Build()));
-
-    /// <summary>Raw-JSON escape hatch - most callers should use <see cref="RespondWithModalAsync(ModalBuilder)"/> instead.</summary>
-    public Task RespondWithModalAsync(string modalJson) =>
-        _client.RespondToInteractionAsync(Interaction.InteractionId, new InteractionResponse(InteractionResponseKind.Modal, ModalJson: modalJson));
-
-    public Task RespondWithModalAsync(ModalBuilder modal) => RespondWithModalAsync(modal.Build());
-
-    public Task RespondWithAutocompleteAsync(IReadOnlyList<(string Name, string Value)> choices) =>
-        _client.RespondToInteractionAsync(
-            Interaction.InteractionId, new InteractionResponse(InteractionResponseKind.AutocompleteResult, AutocompleteChoices: choices));
-
-    public Task<MessageInfo> FollowupAsync(string content, ComponentBuilder? components = null) =>
-        _client.SendInteractionFollowupAsync(Interaction.InteractionId, content, components);
+    /// <summary>Posts a message to the channel the command was used in.</summary>
+    private protected override Task<Message> PostReplyAsync(string content, IReadOnlyCollection<Guid> attachmentIds, CancellationToken ct) =>
+        Client.SendMessageAsync(Interaction.ChannelId, content, attachmentIds: attachmentIds, ct: ct);
 }

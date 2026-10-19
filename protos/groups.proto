@@ -1,0 +1,923 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
+import "common.proto";
+
+option csharp_namespace = "Vc.Backend.WebApi.Groups.Grpc";
+
+package groups;
+
+service GroupsApi {
+  rpc CreateGroup (CreateGroupRequest) returns (CreateGroupResponse) {
+    option (google.api.http) = {
+      post: "/v1/groups"
+      body: "*"
+    };
+  }
+  rpc DeleteGroup (DeleteGroupRequest) returns (DeleteGroupResponse) {
+    option (google.api.http) = {
+      post: "/v1/groups/{id}:delete"
+      body: "*"
+    };
+  }
+  rpc GetUserGroups (GetUserGroupsRequest) returns (GetUserGroupsResponse) {
+    option (google.api.http) = {
+      get: "/v1/groups"
+    };
+  }
+  rpc GetGroup (GetGroupRequest) returns (GetGroupResponse) {
+    option (google.api.http) = {
+      get: "/v1/groups/{id}"
+    };
+  }
+  rpc GetGroupUsers (GetGroupUsersRequest) returns (GetGroupUsersResponse) {
+    option (google.api.http) = {
+      get: "/v1/groups/{group_id}/users"
+    };
+  }
+  // Member list of a channel as the members panel shows it - see GetChannelMemberListRequest.
+  rpc GetChannelMemberList (GetChannelMemberListRequest) returns (GetChannelMemberListResponse) {
+    option (google.api.http) = {
+      get: "/v1/groups/{group_id}/channels/{channel_id}/members"
+    };
+  }
+  rpc UpdateGroup (UpdateGroupRequest) returns (Group) {
+    option (google.api.http) = {
+      post: "/v1/groups/{id}"
+      body: "*"
+    };
+  }
+
+  // Role management
+  rpc GetGroupRoles (GetGroupRolesRequest) returns (GetGroupRolesResponse) {
+    option (google.api.http) = {
+      get: "/v1/groups/{group_id}/roles"
+    };
+  }
+  rpc CreateRole (CreateRoleRequest) returns (Role) {
+    option (google.api.http) = {
+      post: "/v1/groups/{group_id}/roles"
+      body: "*"
+    };
+  }
+  rpc UpdateRole (UpdateRoleRequest) returns (Role) {
+    option (google.api.http) = {
+      post: "/v1/groups/roles/{role_id}:update"
+      body: "*"
+    };
+  }
+  rpc MoveRole (MoveRoleRequest) returns (Role) {
+    option (google.api.http) = {
+      post: "/v1/groups/roles/{role_id}:move"
+      body: "*"
+    };
+  }
+  rpc DeleteRole (DeleteRoleRequest) returns (DeleteRoleResponse) {
+    option (google.api.http) = {
+      post: "/v1/groups/roles/{role_id}:delete"
+      body: "*"
+    };
+  }
+
+  // Category management
+  rpc CreateCategory (CreateCategoryRequest) returns (Category) {
+    option (google.api.http) = {
+      post: "/v1/groups/{group_id}/categories"
+      body: "*"
+    };
+  }
+  rpc UpdateCategory (UpdateCategoryRequest) returns (Category) {
+    option (google.api.http) = {
+      post: "/v1/groups/categories/{id}:update"
+      body: "*"
+    };
+  }
+  rpc DeleteCategory (DeleteCategoryRequest) returns (DeleteCategoryResponse) {
+    option (google.api.http) = {
+      post: "/v1/groups/categories/{id}:delete"
+      body: "*"
+    };
+  }
+  rpc MoveCategory (MoveCategoryRequest) returns (Category) {
+    option (google.api.http) = {
+      post: "/v1/groups/categories/{category_id}:move"
+      body: "*"
+    };
+  }
+
+  // Channel management
+  rpc CreateChannel (CreateChannelRequest) returns (Channel) {
+    option (google.api.http) = {
+      post: "/v1/groups/{category_id}/channels"
+      body: "*"
+    };
+  }
+  rpc DeleteChannel (DeleteChannelRequest) returns (DeleteChannelResponse) {
+    option (google.api.http) = {
+      post: "/v1/groups/channels/{id}:delete"
+      body: "*"
+    };
+  }
+  rpc MoveChannel (MoveChannelRequest) returns (Channel) {
+    option (google.api.http) = {
+      post: "/v1/groups/channels/{channel_id}:move"
+      body: "*"
+    };
+  }
+  // Переключает, наследует ли канал оверрайты своей категории (true, по умолчанию для новых
+  // каналов) или живёт по собственным оверрайтам (false) - см. is_category_permissions_sync на
+  // Channel. Пока включено наследование, собственные оверрайты канала (SetChannelPermissionOverwrite)
+  // сохраняются, но полностью игнорируются при резолвинге эффективных прав.
+  rpc SetChannelCategorySync (SetChannelCategorySyncRequest) returns (Channel) {
+    option (google.api.http) = {
+      post: "/v1/groups/channels/{channel_id}:set-category-sync"
+      body: "*"
+    };
+  }
+
+  // Invite management
+  rpc CreateInvite (CreateInviteRequest) returns (Invite) {
+    option (google.api.http) = {
+      post: "/v1/groups/{group_id}/invites"
+      body: "*"
+    };
+  }
+  rpc UpdateInvite (UpdateInviteRequest) returns (Invite) {
+    option (google.api.http) = {
+      post: "/v1/groups/invites/{id}"
+      body: "*"
+    };
+  }
+  rpc JoinByInvite (JoinByInviteRequest) returns (JoinResponse) {
+    option (google.api.http) = {
+      post: "/v1/groups/join"
+      body: "*"
+    };
+  }
+  rpc LeaveGroup (LeaveGroupRequest) returns (LeaveGroupResponse) {
+    option (google.api.http) = {
+      post: "/v1/groups/{group_id}:leave"
+      body: "*"
+    };
+  }
+  rpc GetGroupInvites (GetGroupInvitesRequest) returns (GetGroupInvitesResponse) {
+    option (google.api.http) = {
+      get: "/v1/groups/{group_id}/invites"
+    };
+  }
+  rpc SetGroupMute (SetGroupMuteRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/groups/{group_id}:mute"
+      body: "*"
+    };
+  }
+  // Per-user notification settings of a group (group row + category/channel overrides).
+  rpc GetNotificationSettings (GetNotificationSettingsRequest) returns (GroupNotificationSettings) {
+    option (google.api.http) = {
+      get: "/v1/groups/{group_id}/notification-settings"
+    };
+  }
+  rpc UpdateNotificationSettings (UpdateNotificationSettingsRequest) returns (GroupNotificationSettings) {
+    option (google.api.http) = {
+      patch: "/v1/groups/{group_id}/notification-settings"
+      body: "*"
+    };
+  }
+  rpc DeleteInvite (DeleteInviteRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/groups/invites/{id}:delete"
+      body: "*"
+    };
+  }
+
+  // Member management
+  rpc KickUser (KickUserRequest) returns (KickUserResponse) {
+    option (google.api.http) = {
+      post: "/v1/groups/{group_id}/users/{user_id}:kick"
+      body: "*"
+    };
+  }
+  rpc BanUser (BanUserRequest) returns (BanUserResponse) {
+    option (google.api.http) = {
+      post: "/v1/groups/{group_id}/users/{user_id}:ban"
+      body: "*"
+    };
+  }
+  rpc UnbanUser (UnbanUserRequest) returns (UnbanUserResponse) {
+    option (google.api.http) = {
+      post: "/v1/groups/{group_id}/users/{user_id}:unban"
+      body: "*"
+    };
+  }
+  rpc GetGroupBans (GetGroupBansRequest) returns (GetGroupBansResponse) {
+    option (google.api.http) = {
+      get: "/v1/groups/{group_id}/bans"
+    };
+  }
+
+  // Permissions: назначение ролей участникам, оверрайты канала, резолвинг эффективных прав.
+  rpc AssignRole (RoleAssignmentRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/groups/{group_id}/roles/{role_id}:assign"
+      body: "*"
+    };
+  }
+  rpc RemoveRole (RoleAssignmentRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/groups/{group_id}/roles/{role_id}:remove"
+      body: "*"
+    };
+  }
+  rpc GetEffectivePermissions (GetEffectivePermissionsRequest) returns (GetEffectivePermissionsResponse) {
+    option (google.api.http) = {
+      get: "/v1/groups/{group_id}/permissions"
+    };
+  }
+  rpc SetChannelPermissionOverwrite (SetChannelPermissionOverwriteRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/groups/channels/{channel_id}/permission-overwrites:set"
+      body: "*"
+    };
+  }
+  rpc DeleteChannelPermissionOverwrite (DeleteChannelPermissionOverwriteRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/groups/channels/{channel_id}/permission-overwrites:delete"
+      body: "*"
+    };
+  }
+  rpc GetChannelPermissionOverwrites (GetChannelPermissionOverwritesRequest) returns (GetChannelPermissionOverwritesResponse) {
+    option (google.api.http) = {
+      get: "/v1/groups/channels/{channel_id}/permission-overwrites"
+    };
+  }
+  rpc SetCategoryPermissionOverwrite (SetCategoryPermissionOverwriteRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/groups/categories/{category_id}/permission-overwrites:set"
+      body: "*"
+    };
+  }
+  rpc DeleteCategoryPermissionOverwrite (DeleteCategoryPermissionOverwriteRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/groups/categories/{category_id}/permission-overwrites:delete"
+      body: "*"
+    };
+  }
+  rpc GetCategoryPermissionOverwrites (GetCategoryPermissionOverwritesRequest) returns (GetCategoryPermissionOverwritesResponse) {
+    option (google.api.http) = {
+      get: "/v1/groups/categories/{category_id}/permission-overwrites"
+    };
+  }
+
+  // Audit log (аналог Server Audit Log в Discord) - все административные/модераторские действия в группе.
+  rpc GetGroupAuditLog (GetGroupAuditLogRequest) returns (GetGroupAuditLogResponse) {
+    option (google.api.http) = {
+      get: "/v1/groups/{group_id}/audit-log"
+    };
+  }
+
+  // Group avatar/banner management
+  rpc InitiateGroupAvatarUpload (InitiateGroupAvatarUploadRequest) returns (InitiateGroupMediaUploadResponse) {
+    option (google.api.http) = {
+      post: "/v1/groups/{group_id}/avatar/upload"
+      body: "*"
+    };
+  }
+  rpc ConfirmGroupAvatarUpload (ConfirmGroupAvatarUploadRequest) returns (Group) {
+    option (google.api.http) = {
+      post: "/v1/groups/{group_id}/avatar/confirm"
+      body: "*"
+    };
+  }
+  rpc InitiateGroupBannerUpload (InitiateGroupBannerUploadRequest) returns (InitiateGroupMediaUploadResponse) {
+    option (google.api.http) = {
+      post: "/v1/groups/{group_id}/banner/upload"
+      body: "*"
+    };
+  }
+  rpc ConfirmGroupBannerUpload (ConfirmGroupBannerUploadRequest) returns (Group) {
+    option (google.api.http) = {
+      post: "/v1/groups/{group_id}/banner/confirm"
+      body: "*"
+    };
+  }
+  rpc DeleteGroupAvatar (DeleteGroupAvatarRequest) returns (Group) {
+    option (google.api.http) = {
+      delete: "/v1/groups/{group_id}/avatar"
+    };
+  }
+  rpc DeleteGroupBanner (DeleteGroupBannerRequest) returns (Group) {
+    option (google.api.http) = {
+      delete: "/v1/groups/{group_id}/banner"
+    };
+  }
+}
+
+enum AccessType {
+  OPEN = 0;
+  CLOSED = 1;
+  INVITE_ONLY = 2;
+  HIDDEN = 3;
+}
+
+enum VerificationLevel {
+  NONE = 0;
+  LOW = 1;
+  MEDIUM = 2;
+}
+
+message Channel {
+  string id = 1;
+  string name = 2;
+  int32 type = 3;
+  string position = 4;
+  repeated common.ChannelVoiceUser users = 5;
+  string category_id = 6;
+  optional int32 user_limit = 7;
+  optional int32 bitrate = 8;
+  // Если true (по умолчанию для новых каналов) - канал наследует permission overwrite'ы своей
+  // категории, а собственные оверрайты канала (роль/пользователь) при резолвинге прав полностью
+  // игнорируются. Если false - канал живёт по своим оверрайтам, категория на него не влияет.
+  bool is_category_permissions_sync = 9;
+}
+
+message Category {
+  string id = 1;
+  string name = 2;
+  string position = 3;
+  repeated Channel channels = 4;
+}
+
+message Role {
+  string id = 1;
+  string group_id = 2;
+  string name = 3;
+  string position = 4;
+  string color = 5;
+  int64 permissions = 6;
+  // Show members with this role separately from the other online members (Discord "hoist"): in the
+  // member list, online members are grouped under their most senior hoisted role.
+  bool hoist = 7;
+  // The role can be mentioned as <@&id> by anyone who can send messages; otherwise only with MentionEveryone.
+  bool mentionable = 8;
+}
+
+message Group {
+  string id = 1;
+  string owner_id = 2;
+  string name = 3;
+  AccessType access_type = 4;
+  VerificationLevel verification_level = 5;
+  google.protobuf.Timestamp created_at = 6;
+  string avatar_id = 7;
+  string banner_id = 8;
+  string avatar_url = 9;
+  string banner_url = 10;
+
+  // Whether the requesting user has muted push notifications for this group.
+  bool is_muted = 11;
+
+  // Голосовой регион группы (id из ChannelsApi.ListVoiceRegions); пусто — «авто».
+  string voice_region = 12;
+}
+
+message GroupDetails {
+  string id = 1;
+  string owner_id = 2;
+  string name = 3;
+  AccessType access_type = 4;
+  VerificationLevel verification_level = 5;
+  google.protobuf.Timestamp created_at = 6;
+  repeated Category categories = 7;
+  string avatar_id = 8;
+  string banner_id = 9;
+  string avatar_url = 10;
+  string banner_url = 11;
+  bool i_am_is_owner = 12;
+
+  // Голосовой регион группы (id из ChannelsApi.ListVoiceRegions); пусто — «авто».
+  string voice_region = 13;
+
+  // Admin-set default notification level of the group (ALL_MESSAGES / ONLY_MENTIONS).
+  NotificationLevel default_notification_level = 14;
+}
+
+message CreateGroupRequest {
+  string name = 1;
+}
+
+message CreateGroupResponse {
+  string id = 1;
+  string owner_id = 2;
+  string name = 3;
+  AccessType access_type = 4;
+  VerificationLevel verification_level = 5;
+  google.protobuf.Timestamp created_at = 6;
+}
+
+message DeleteGroupRequest {
+  string id = 1;
+}
+
+message DeleteGroupResponse {
+  string id = 1;
+  bool success = 2;
+}
+
+message GetUserGroupsRequest {}
+
+message GetUserGroupsResponse {
+  repeated Group groups = 1;
+}
+
+message GetGroupRequest {
+  string id = 1;
+}
+
+message GetGroupResponse {
+  GroupDetails group = 1;
+}
+
+message GetGroupUsersRequest {
+  string group_id = 1;
+  // Page size; 0 = server default.
+  int32 page_size = 2;
+  // next_page_token of the previous page; empty = first page.
+  string page_token = 3;
+  // Name search: when set, returns up to page_size best matches by username / display name
+  // (case-insensitive) instead of a page of the member list; next_page_token is then empty.
+  string query = 4;
+}
+
+message GetGroupUsersResponse {
+  repeated GroupMember members = 1;
+  // Pass as page_token to get the next page; empty on the last page.
+  string next_page_token = 2;
+}
+
+message GroupMember {
+  common.User user = 1;
+  repeated string role_ids = 2;
+}
+
+// Only members who can view the channel, in display order: one section per hoisted role (online members whose
+// most senior hoisted role it is, roles senior-first), then the other online members, then offline members -
+// the latter only in groups small enough (see offline_hidden). Sorted by name within a section. offset/limit cut
+// a range out of that flat list; limit 0 = 100, at most 200. Requires ViewChannels on the channel.
+message GetChannelMemberListRequest {
+  string group_id = 1;
+  string channel_id = 2;
+  int32 offset = 3;
+  int32 limit = 4;
+}
+
+message MemberListSection {
+  // Role id for a hoisted role section, otherwise "online" / "offline".
+  string key = 1;
+  optional string role_id = 2;
+  // Members in the whole section, not just the returned range.
+  int32 count = 3;
+}
+
+message MemberListItem {
+  GroupMember member = 1;
+  string section_key = 2;
+}
+
+message GetChannelMemberListResponse {
+  // Every non-empty section in display order.
+  repeated MemberListSection sections = 1;
+  // The requested range of the flat list.
+  repeated MemberListItem items = 2;
+  // Length of the whole flat list.
+  int32 total = 3;
+  // Offline members are not listed - the group is too large.
+  bool offline_hidden = 4;
+}
+
+message GetGroupRolesRequest {
+  string group_id = 1;
+  // Page size; 0 = server default.
+  int32 page_size = 2;
+  // next_page_token of the previous page; empty = first page.
+  string page_token = 3;
+}
+
+message GetGroupRolesResponse {
+  repeated Role roles = 1;
+  // Pass as page_token to get the next page; empty on the last page.
+  string next_page_token = 2;
+}
+
+message CreateRoleRequest {
+  string group_id = 1;
+  string name = 2;
+  optional string color = 3;
+  int64 permissions = 4;
+  // See Role.hoist; unset = false.
+  optional bool hoist = 5;
+}
+
+message UpdateRoleRequest {
+  string role_id = 1;
+  string name = 2;
+  int64 permissions = 3;
+  optional string color = 4;
+  // See Role.hoist; unset = keep the current value.
+  optional bool hoist = 5;
+}
+
+message MoveRoleRequest {
+  string role_id = 1;
+  optional string previous_role_id = 2;
+  optional string next_role_id = 3;
+}
+
+message DeleteRoleRequest {
+  string role_id = 1;
+}
+
+message DeleteRoleResponse {
+  string id = 1;
+  bool success = 2;
+}
+
+message CreateCategoryRequest {
+  string group_id = 1;
+  string name = 2;
+}
+
+message UpdateCategoryRequest {
+  string id = 1;
+  string name = 2;
+}
+
+message DeleteCategoryRequest {
+  string id = 1;
+}
+
+message DeleteCategoryResponse {
+  string id = 1;
+  bool success = 2;
+}
+
+message MoveCategoryRequest {
+  string category_id = 1;
+  optional string previous_category_id = 2;
+  optional string next_category_id = 3;
+}
+
+message CreateChannelRequest {
+  string category_id = 1;
+  string name = 2;
+  int32 type = 3;
+}
+
+message DeleteChannelRequest {
+  string id = 1;
+}
+
+message DeleteChannelResponse {
+  string id = 1;
+  bool success = 2;
+}
+
+message MoveChannelRequest {
+  string channel_id = 1;
+  optional string previous_channel_id = 2;
+  optional string next_channel_id = 3;
+  optional string target_category_id = 4;
+}
+
+message UpdateGroupRequest {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  AccessType access_type = 4;
+  VerificationLevel verification_level = 5;
+
+  // Голосовой регион группы: не задан — не меняется, пустая строка — «авто», иначе id из ChannelsApi.ListVoiceRegions.
+  optional string voice_region = 6;
+
+  // ManageGroup; only ALL_MESSAGES / ONLY_MENTIONS. Not set — unchanged.
+  optional NotificationLevel default_notification_level = 7;
+}
+
+message Invite {
+  string id = 1;
+  string group_id = 2;
+  string owner_id = 3;
+  string invite_code = 4;
+  google.protobuf.Timestamp created_at = 5;
+  optional google.protobuf.Timestamp expires_at = 6;
+  int64 uses_amount = 7;
+  int64 max_use_amount = 8;
+}
+
+message CreateInviteRequest {
+  string group_id = 1;
+  optional google.protobuf.Timestamp expires_at = 2;
+  int64 max_uses = 3;
+}
+
+message UpdateInviteRequest {
+  string id = 1;
+  optional google.protobuf.Timestamp expires_at = 2;
+  int64 max_uses = 3;
+}
+
+message JoinByInviteRequest {
+  string invite_code = 1;
+}
+
+message JoinResponse {
+  string group_id = 1;
+  bool success = 2;
+}
+
+message LeaveGroupRequest {
+  string group_id = 1;
+}
+
+message LeaveGroupResponse {
+  string group_id = 1;
+  bool success = 2;
+}
+
+message SetGroupMuteRequest {
+  string group_id = 1;
+  bool muted = 2;
+}
+
+enum NotificationLevel {
+  NOTIFICATION_LEVEL_INHERIT = 0;        // inherit: channel -> category -> group -> group default
+  NOTIFICATION_LEVEL_ALL_MESSAGES = 1;
+  NOTIFICATION_LEVEL_ONLY_MENTIONS = 2;
+  NOTIFICATION_LEVEL_NOTHING = 3;
+}
+
+enum NotificationTargetType {
+  NOTIFICATION_TARGET_TYPE_UNSPECIFIED = 0;
+  NOTIFICATION_TARGET_TYPE_GROUP = 1;    // target_id = group_id
+  NOTIFICATION_TARGET_TYPE_CATEGORY = 2;
+  NOTIFICATION_TARGET_TYPE_CHANNEL = 3;
+}
+
+enum MuteDuration {
+  MUTE_DURATION_UNSPECIFIED = 0;         // leave unchanged
+  MUTE_DURATION_UNMUTE = 1;
+  MUTE_DURATION_MINUTES_15 = 2;
+  MUTE_DURATION_HOURS_1 = 3;
+  MUTE_DURATION_HOURS_3 = 4;
+  MUTE_DURATION_HOURS_8 = 5;
+  MUTE_DURATION_HOURS_24 = 6;
+  MUTE_DURATION_FOREVER = 7;
+}
+
+message NotificationOverride {
+  string target_id = 1;
+  NotificationTargetType target_type = 2;
+  NotificationLevel level = 3;                       // INHERIT = no own level
+  google.protobuf.Timestamp muted_until = 4;         // unset = not muted; 9999-12-31 = forever
+}
+
+message GroupNotificationSettings {
+  string group_id = 1;
+  NotificationLevel level = 2;                       // personal group level; INHERIT = group default
+  google.protobuf.Timestamp muted_until = 3;
+  bool suppress_everyone = 4;                        // suppress @everyone and @here
+  bool suppress_roles = 5;                           // suppress role mentions
+  repeated NotificationOverride overrides = 6;       // categories and channels with a level or a mute
+  NotificationLevel default_level = 7;               // admin-set group default (ALL_MESSAGES/ONLY_MENTIONS)
+  bool large_group = 8;                              // > 1000 members: push only on mentions
+}
+
+message GetNotificationSettingsRequest {
+  string group_id = 1;
+}
+
+message UpdateNotificationSettingsRequest {
+  string group_id = 1;
+  string target_id = 2;                              // group_id for the group row
+  NotificationTargetType target_type = 3;
+  optional NotificationLevel level = 4;
+  MuteDuration mute = 5;                             // UNSPECIFIED = unchanged; the server computes the deadline
+  optional bool suppress_everyone = 6;               // target_type = GROUP only
+  optional bool suppress_roles = 7;                  // target_type = GROUP only
+}
+
+message KickUserRequest {
+  string group_id = 1;
+  string user_id = 2;
+}
+
+message KickUserResponse {
+  string group_id = 1;
+  string user_id = 2;
+  bool success = 3;
+}
+
+message BanUserRequest {
+  string group_id = 1;
+  string user_id = 2;
+  string reason = 3;
+}
+
+message BanUserResponse {
+  string group_id = 1;
+  string user_id = 2;
+  bool success = 3;
+}
+
+message UnbanUserRequest {
+  string group_id = 1;
+  string user_id = 2;
+}
+
+message UnbanUserResponse {
+  string group_id = 1;
+  string user_id = 2;
+  bool success = 3;
+}
+
+message GroupBan {
+  common.User user = 1;
+  string reason = 2;
+  string banned_by_user_id = 3;
+  google.protobuf.Timestamp banned_at = 4;
+}
+
+message GetGroupBansRequest {
+  string group_id = 1;
+  // Page size; 0 = server default.
+  int32 page_size = 2;
+  // next_page_token of the previous page; empty = first page.
+  string page_token = 3;
+}
+
+message GetGroupBansResponse {
+  repeated GroupBan bans = 1;
+  // Pass as page_token to get the next page; empty on the last page.
+  string next_page_token = 2;
+}
+
+message GetGroupInvitesRequest {
+  string group_id = 1;
+  // Page size; 0 = server default.
+  int32 page_size = 2;
+  // next_page_token of the previous page; empty = first page.
+  string page_token = 3;
+}
+
+message GetGroupInvitesResponse {
+  repeated Invite invites = 1;
+  // Pass as page_token to get the next page; empty on the last page.
+  string next_page_token = 2;
+}
+
+message DeleteInviteRequest {
+  string id = 1;
+}
+
+message InitiateGroupAvatarUploadRequest {
+  string group_id = 1;
+  string content_type = 2;
+  int64 size_bytes = 3;
+}
+
+message InitiateGroupBannerUploadRequest {
+  string group_id = 1;
+  string content_type = 2;
+  int64 size_bytes = 3;
+}
+
+message InitiateGroupMediaUploadResponse {
+  string media_id = 1;
+  string upload_url = 2;
+  google.protobuf.Timestamp expires_at = 3;
+}
+
+message ConfirmGroupAvatarUploadRequest {
+  string group_id = 1;
+  string avatar_id = 2;
+}
+
+message ConfirmGroupBannerUploadRequest {
+  string group_id = 1;
+  string banner_id = 2;
+}
+
+message DeleteGroupAvatarRequest {
+  string group_id = 1;
+}
+
+message DeleteGroupBannerRequest {
+  string group_id = 1;
+}
+
+// AssignRole и RemoveRole принимают ровно один и тот же набор полей - общее сообщение вместо
+// двух идентичных.
+message RoleAssignmentRequest {
+  string group_id = 1;
+  string target_user_id = 2;
+  string role_id = 3;
+}
+
+message GetEffectivePermissionsRequest {
+  string group_id = 1;
+  // Пусто - права резолвятся для вызывающего; иначе - для указанного актора (человека или бота),
+  // при условии что вызывающий сам состоит в группе (проверяется резолвером - у не-участника 0 прав).
+  optional string actor_id = 2;
+  optional string channel_id = 3;
+}
+
+message GetEffectivePermissionsResponse {
+  uint64 permissions = 1;
+}
+
+message SetChannelCategorySyncRequest {
+  string channel_id = 1;
+  bool is_synced = 2;
+}
+
+message SetChannelPermissionOverwriteRequest {
+  string channel_id = 1;
+  string target_id = 2;
+  bool is_role_target = 3;
+  uint64 allow = 4;
+  uint64 deny = 5;
+}
+
+message DeleteChannelPermissionOverwriteRequest {
+  string channel_id = 1;
+  string target_id = 2;
+  bool is_role_target = 3;
+}
+
+message GetChannelPermissionOverwritesRequest {
+  string channel_id = 1;
+}
+
+message ChannelPermissionOverwrite {
+  string target_id = 1;
+  bool is_role_target = 2;
+  uint64 allow = 3;
+  uint64 deny = 4;
+}
+
+message GetChannelPermissionOverwritesResponse {
+  repeated ChannelPermissionOverwrite overwrites = 1;
+}
+
+message SetCategoryPermissionOverwriteRequest {
+  string category_id = 1;
+  string target_id = 2;
+  bool is_role_target = 3;
+  uint64 allow = 4;
+  uint64 deny = 5;
+}
+
+message DeleteCategoryPermissionOverwriteRequest {
+  string category_id = 1;
+  string target_id = 2;
+  bool is_role_target = 3;
+}
+
+message GetCategoryPermissionOverwritesRequest {
+  string category_id = 1;
+}
+
+message CategoryPermissionOverwrite {
+  string target_id = 1;
+  bool is_role_target = 2;
+  uint64 allow = 3;
+  uint64 deny = 4;
+}
+
+message GetCategoryPermissionOverwritesResponse {
+  repeated CategoryPermissionOverwrite overwrites = 1;
+}
+
+message GetGroupAuditLogRequest {
+  string group_id = 1;
+  int32 limit = 2;
+  optional string before_id = 3;
+}
+
+message GroupAuditLogEntry {
+  string id = 1;
+  string actor_id = 2;
+  string actor_type = 3;
+  string actor_display_name = 4;
+  string action_type = 5;
+  optional string target_id = 6;
+  optional string target_display_name = 7;
+  optional string changes = 8;
+  google.protobuf.Timestamp created_at = 9;
+}
+
+message GetGroupAuditLogResponse {
+  repeated GroupAuditLogEntry entries = 1;
+}
+

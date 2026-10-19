@@ -1,0 +1,197 @@
+syntax = "proto3";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+import "common.proto";
+
+option csharp_namespace = "Vc.Backend.WebApi.Users.Grpc";
+
+package users;
+
+service UsersApi {
+  rpc RefreshToken (RefreshTokenRequest) returns (RefreshTokenResponse) {
+    option (google.api.http) = {
+      post: "/v1/users/token/refresh"
+      body: "*"
+    };
+  }
+  rpc GetMe (google.protobuf.Empty) returns (UserResponse) {
+    option (google.api.http) = {
+      get: "/v1/users/me"
+    };
+  }
+  rpc UpdateUser (UpdateUserRequest) returns (UserResponse) {
+    option (google.api.http) = {
+      post: "/v1/users/me"
+      body: "*"
+    };
+  }
+  rpc UpdateUserStatus (UpdateUserStatusRequest) returns (UserResponse) {
+    option (google.api.http) = {
+      post: "/v1/users/me/status"
+      body: "*"
+    };
+  }
+  rpc Logout (LogoutRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/users/logout"
+      body: "*"
+    };
+  }
+  rpc InitiateAvatarUpload (InitiateAvatarUploadRequest) returns (InitiateAvatarUploadResponse) {
+    option (google.api.http) = {
+      post: "/v1/users/me/avatar/upload"
+      body: "*"
+    };
+  }
+  rpc ConfirmAvatarUpload (ConfirmAvatarUploadRequest) returns (UserResponse) {
+    option (google.api.http) = {
+      post: "/v1/users/me/avatar/confirm"
+      body: "*"
+    };
+  }
+  rpc GetUserAvatar (GetUserAvatarRequest) returns (GetUserAvatarResponse) {
+    option (google.api.http) = {
+      get: "/v1/users/{user_id}/avatar"
+    };
+  }
+  rpc DeleteAvatar (google.protobuf.Empty) returns (UserResponse) {
+    option (google.api.http) = {
+      delete: "/v1/users/me/avatar"
+    };
+  }
+  rpc InitiateBannerUpload (InitiateBannerUploadRequest) returns (InitiateBannerUploadResponse) {
+    option (google.api.http) = {
+      post: "/v1/users/me/banner/upload"
+      body: "*"
+    };
+  }
+  rpc ConfirmBannerUpload (ConfirmBannerUploadRequest) returns (UserResponse) {
+    option (google.api.http) = {
+      post: "/v1/users/me/banner/confirm"
+      body: "*"
+    };
+  }
+  rpc DeleteBanner (google.protobuf.Empty) returns (UserResponse) {
+    option (google.api.http) = {
+      delete: "/v1/users/me/banner"
+    };
+  }
+  rpc RegisterDeviceToken (RegisterDeviceTokenRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/users/me/device-tokens"
+      body: "*"
+    };
+  }
+  rpc UnregisterDeviceToken (UnregisterDeviceTokenRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/users/me/device-tokens/delete"
+      body: "*"
+    };
+  }
+}
+
+enum UserStatus {
+  ONLINE = 0;
+  OFFLINE = 1;
+  DO_NOT_DISTURB = 2;
+  INVISIBLE = 3;
+}
+
+message RefreshTokenRequest {
+  string refresh_token = 1;
+}
+
+message RefreshTokenResponse {
+  string access_token = 1;
+  int32 expires_in = 2;
+  int32 refresh_expires_in = 3;
+  string refresh_token = 4;
+  string token_type = 5;
+  string id_token = 6;
+  int32 not_before_policy = 7;
+  string session_state = 8;
+  string scope = 9;
+}
+
+message UserResponse {
+  string id = 1;
+  string username = 2;
+  string email = 3;
+  string display_name = 4;
+  string description = 5;
+  string status = 6;
+  string preferred_language = 7;
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
+  google.protobuf.Timestamp last_activity = 10;
+  bool is_confirmed = 11;
+  bool is_bot = 12;
+  common.Subscription subscription = 13;
+  string avatar_url = 14;
+  string banner_url = 15;
+  UserStatus user_status = 16;
+}
+
+message UpdateUserRequest {
+  optional string display_name = 1;
+  optional string description = 2;
+  optional string status = 3;
+  optional string preferred_language = 4;
+}
+
+message UpdateUserStatusRequest {
+  UserStatus user_status = 1;
+}
+
+message LogoutRequest {
+  string refresh_token = 1;
+}
+
+message InitiateAvatarUploadRequest {
+  string content_type = 1;
+  int64 size_bytes = 2;
+}
+
+message InitiateAvatarUploadResponse {
+  string avatar_id = 1;
+  string upload_url = 2;
+  google.protobuf.Timestamp expires_at = 3;
+}
+
+message ConfirmAvatarUploadRequest {
+  string avatar_id = 1;
+}
+
+message GetUserAvatarRequest {
+  string user_id = 1;
+}
+
+message GetUserAvatarResponse {
+  string avatar_url = 1;
+}
+
+message InitiateBannerUploadRequest {
+  string content_type = 1;
+  int64 size_bytes = 2;
+}
+
+message InitiateBannerUploadResponse {
+  string banner_id = 1;
+  string upload_url = 2;
+  google.protobuf.Timestamp expires_at = 3;
+}
+
+message ConfirmBannerUploadRequest {
+  string banner_id = 1;
+}
+
+message RegisterDeviceTokenRequest {
+  string device_token = 1;
+  string platform = 2; // "android" or "ios"
+}
+
+message UnregisterDeviceTokenRequest {
+  string device_token = 1;
+}

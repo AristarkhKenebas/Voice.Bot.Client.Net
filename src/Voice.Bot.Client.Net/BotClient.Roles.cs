@@ -1,45 +1,58 @@
+using Voice.Bot.Client.Net.Internal;
 using Voice.Bot.Client.Net.Models;
-using GrpcCreateRoleRequest = Vc.Backend.WebApi.Bots.Apis.Grpc.CreateRoleRequest;
-using GrpcUpdateRoleRequest = Vc.Backend.WebApi.Bots.Apis.Grpc.UpdateRoleRequest;
-using GrpcDeleteRoleRequest = Vc.Backend.WebApi.Bots.Apis.Grpc.DeleteRoleRequest;
-using GrpcRoleAssignmentRequest = Vc.Backend.WebApi.Bots.Apis.Grpc.RoleAssignmentRequest;
+using Vc.Backend.WebApi.Groups.Grpc;
+using Role = Voice.Bot.Client.Net.Models.Role;
 
 namespace Voice.Bot.Client.Net;
 
-/// <summary>Role management - requires the <c>Guilds</c> intent plus <c>ManageRoles</c> in the bot's managed role for the group.</summary>
+/// <summary>Roles of a group and assigning them to members (requires <c>ManageRoles</c>).</summary>
 public sealed partial class BotClient
 {
-    /// <summary>Creates a role in a group this bot belongs to.</summary>
-    public async Task<BotRole> CreateRoleAsync(
-        Guid groupId, string name, string? color = null, long permissions = 0, CancellationToken ct = default)
+    public async Task<Page<Role>> GetRolesAsync(Guid groupId, int pageSize = 0, string? pageToken = null, CancellationToken ct = default)
     {
-        var request = new GrpcCreateRoleRequest { GroupId = groupId.ToString(), Name = name };
-        if (color is not null) request.Color = color;
-        request.Permissions = permissions;
-
-        return (await _transport.CreateRoleAsync(request, ct)).ToModel();
+        var request = new GetGroupRolesRequest { GroupId = groupId.ToString(), PageSize = pageSize, PageToken = pageToken ?? "" };
+        var response = await _api.CallAsync(o => _api.Groups.GetGroupRolesAsync(request, o), ct).ConfigureAwait(false);
+        return new Page<Role>(response.Roles.Select(r => r.ToModel()).ToList(), Wire.Text(response.NextPageToken));
     }
 
-    /// <summary>Updates a role's name/permissions/color. Requires role-hierarchy above the target role.</summary>
-    public async Task<BotRole> UpdateRoleAsync(Guid roleId, string name, long permissions, string? color = null, CancellationToken ct = default)
+    /// <param name="color">Color as <c>"#rrggbb"</c>; <c>null</c> for none.</param>
+    /// <param name="hoist">Show members with this role as a separate section; <c>null</c> for the default.</param>
+    public async Task<Role> CreateRoleAsync(
+        Guid groupId, string name, Permissions permissions = Permissions.None, string? color = null, bool? hoist = null, CancellationToken ct = default)
     {
-        var request = new GrpcUpdateRoleRequest { RoleId = roleId.ToString(), Name = name, Permissions = permissions };
+        var request = new CreateRoleRequest { GroupId = groupId.ToString(), Name = name, Permissions = (long)(ulong)permissions };
         if (color is not null) request.Color = color;
-
-        return (await _transport.UpdateRoleAsync(request, ct)).ToModel();
+        if (hoist is { } h) request.Hoist = h;
+        return (await _api.CallAsync(o => _api.Groups.CreateRoleAsync(request, o), ct, Idempotency.Unsafe).ConfigureAwait(false)).ToModel();
     }
 
-    /// <summary>Deletes a role. The <c>@everyone</c> role and managed (bot) roles cannot be deleted this way.</summary>
-    public Task DeleteRoleAsync(Guid roleId, CancellationToken ct = default) =>
-        _transport.DeleteRoleAsync(new GrpcDeleteRoleRequest { RoleId = roleId.ToString() }, ct);
+    /// <summary>Name and permissions are always replaced; <paramref name="color"/> and <paramref name="hoist"/> only when not <c>null</c>.</summary>
+    public async Task<Role> UpdateRoleAsync(
+        Guid roleId, string name, Permissions permissions, string? color = null, bool? hoist = null, CancellationToken ct = default)
+    {
+        var request = new UpdateRoleRequest { RoleId = roleId.ToString(), Name = name, Permissions = (long)(ulong)permissions };
+        if (color is not null) request.Color = color;
+        if (hoist is { } h) request.Hoist = h;
+        return (await _api.CallAsync(o => _api.Groups.UpdateRoleAsync(request, o), ct).ConfigureAwait(false)).ToModel();
+    }
 
-    /// <summary>Grants a role to a group member. Requires role-hierarchy above the target role.</summary>
-    public Task AssignRoleAsync(Guid groupId, Guid targetUserId, Guid roleId, CancellationToken ct = default) =>
-        _transport.AssignRoleAsync(
-            new GrpcRoleAssignmentRequest { GroupId = groupId.ToString(), TargetUserId = targetUserId.ToString(), RoleId = roleId.ToString() }, ct);
+    /// <summary>Moves a role between two neighbours; one of them is enough.</summary>
+    public async Task<Role> MoveRoleAsync(Guid roleId, Guid? previousRoleId = null, Guid? nextRoleId = null, CancellationToken ct = default)
+    {
+        var request = new MoveRoleRequest { RoleId = roleId.ToString() };
+        if (previousRoleId is { } previous) request.PreviousRoleId = previous.ToString();
+        if (nextRoleId is { } next) request.NextRoleId = next.ToString();
+        return (await _api.CallAsync(o => _api.Groups.MoveRoleAsync(request, o), ct).ConfigureAwait(false)).ToModel();
+    }
 
-    /// <summary>Revokes a role from a group member. Requires role-hierarchy above the target role.</summary>
-    public Task RemoveRoleAsync(Guid groupId, Guid targetUserId, Guid roleId, CancellationToken ct = default) =>
-        _transport.RemoveRoleAsync(
-            new GrpcRoleAssignmentRequest { GroupId = groupId.ToString(), TargetUserId = targetUserId.ToString(), RoleId = roleId.ToString() }, ct);
+    public async Task DeleteRoleAsync(Guid roleId, CancellationToken ct = default) =>
+        await _api.DeleteAsync(o => _api.Groups.DeleteRoleAsync(new DeleteRoleRequest { RoleId = roleId.ToString() }, o), ct).ConfigureAwait(false);
+
+    public async Task AssignRoleAsync(Guid groupId, Guid targetUserId, Guid roleId, CancellationToken ct = default) =>
+        await _api.CallAsync(o => _api.Groups.AssignRoleAsync(
+            new RoleAssignmentRequest { GroupId = groupId.ToString(), TargetUserId = targetUserId.ToString(), RoleId = roleId.ToString() }, o), ct).ConfigureAwait(false);
+
+    public async Task RemoveRoleAsync(Guid groupId, Guid targetUserId, Guid roleId, CancellationToken ct = default) =>
+        await _api.CallAsync(o => _api.Groups.RemoveRoleAsync(
+            new RoleAssignmentRequest { GroupId = groupId.ToString(), TargetUserId = targetUserId.ToString(), RoleId = roleId.ToString() }, o), ct).ConfigureAwait(false);
 }

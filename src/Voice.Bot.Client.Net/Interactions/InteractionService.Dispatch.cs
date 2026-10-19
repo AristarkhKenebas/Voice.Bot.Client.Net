@@ -1,86 +1,50 @@
-using System.Linq;
 using System.Reflection;
+using Microsoft.Extensions.Logging;
 using Voice.Bot.Client.Net.Events;
 using Voice.Bot.Client.Net.Internal;
 
 namespace Voice.Bot.Client.Net.Interactions;
 
-/// <summary>Matching an incoming interaction to a registered handler and invoking it.</summary>
+/// <summary>Matching an incoming slash-command call to a registered handler and invoking it.</summary>
 public sealed partial class InteractionService
 {
     private async Task DispatchAsync(BotInteractionEvent interaction)
     {
-        (RegisteredHandler Handler, string? Capture)? match = interaction.Type switch
+        if (interaction.Type != InteractionType.ApplicationCommand || string.IsNullOrEmpty(interaction.Data.CommandName)) return;
+
+        var handler = _handlers.FirstOrDefault(h => h.CommandName == interaction.Data.CommandName);
+        if (handler is null)
         {
-            InteractionType.ApplicationCommand => FindByName(HandlerKind.SlashCommand, interaction.Data.CommandName),
-            InteractionType.MessageComponent => FindByCustomId(HandlerKind.Component, interaction.Data.CustomId),
-            InteractionType.ModalSubmit => FindByCustomId(HandlerKind.Modal, interaction.Data.CustomId),
-            InteractionType.ApplicationCommandAutocomplete => FindAutocomplete(interaction.Data.CommandName, interaction.Data.FocusedOption),
-            _ => null,
-        };
-
-        if (match is not { } found) return; // no module claims this interaction - not an error, raw InteractionCreated subscribers may still handle it
-
-        var module = (InteractionModuleBase)(_moduleFactory?.Invoke(found.Handler.ModuleType) ?? Activator.CreateInstance(found.Handler.ModuleType)!);
-        module.Context = new InteractionContext(_client, interaction);
-
-        var args = BuildArguments(found.Handler, interaction, found.Capture);
-        if (found.Handler.Method.Invoke(module, args) is Task task)
-        {
-            await task.ConfigureAwait(false);
+            // No module claims this command - not an error, raw InteractionCreated subscribers may still handle it.
+            _logger.LogDebug("Unknown slash command /{Command} from {UserId}", interaction.Data.CommandName, interaction.InvokingUserId);
+            return;
         }
+
+        var context = new InteractionContext(_client, interaction);
+        await _runner.RunAsync(context, handler.Metadata, _services, () => ExecuteAsync(handler, context),
+            ex => RaiseHandlerFailedAsync(ex, interaction)).ConfigureAwait(false);
     }
 
-    private (RegisteredHandler, string?)? FindByName(HandlerKind kind, string? name)
+    private async Task ExecuteAsync(RegisteredHandler handler, InteractionContext context)
     {
-        if (string.IsNullOrEmpty(name)) return null;
-        var handler = _handlers.FirstOrDefault(h => h.Kind == kind && h.Match == name);
-        return handler is null ? null : (handler, null);
-    }
-
-    private (RegisteredHandler, string?)? FindByCustomId(HandlerKind kind, string? customId)
-    {
-        if (string.IsNullOrEmpty(customId)) return null;
-
-        foreach (var handler in _handlers.Where(h => h.Kind == kind))
+        var args = BuildArguments(handler, context.Interaction);
+        handler.Metadata.UseCooldown(context);
+        await _modules.RunAsync<InteractionModuleBase>(handler.ModuleType, async module =>
         {
-            if (TryMatchCustomId(handler.Match, customId, out var capture))
+            module.Context = context;
+            try
             {
-                return (handler, capture);
+                await CommandRunner.InvokeAsync(handler.Method, module, args).ConfigureAwait(false);
             }
-        }
-
-        return null;
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                if (!await module.OnErrorAsync(ex).ConfigureAwait(false)) throw;
+            }
+        }).ConfigureAwait(false);
     }
 
-    private (RegisteredHandler, string?)? FindAutocomplete(string? commandName, string? focusedOption)
-    {
-        if (string.IsNullOrEmpty(commandName) || string.IsNullOrEmpty(focusedOption)) return null;
-        var handler = _handlers.FirstOrDefault(h => h.Kind == HandlerKind.Autocomplete && h.Match == commandName && h.OptionName == focusedOption);
-        return handler is null ? null : (handler, null);
-    }
-
-    private static bool TryMatchCustomId(string pattern, string customId, out string? capture)
-    {
-        var starIndex = pattern.IndexOf('*');
-        if (starIndex < 0)
-        {
-            capture = null;
-            return pattern == customId;
-        }
-
-        var prefix = pattern[..starIndex];
-        if (!customId.StartsWith(prefix, StringComparison.Ordinal))
-        {
-            capture = null;
-            return false;
-        }
-
-        capture = customId[prefix.Length..];
-        return true;
-    }
-
-    private static object?[] BuildArguments(RegisteredHandler handler, BotInteractionEvent interaction, string? wildcardCapture)
+    /// <exception cref="CommandRejectedException">An option value doesn't convert to its parameter's type.</exception>
+    private object?[] BuildArguments(RegisteredHandler handler, BotInteractionEvent interaction)
     {
         var parameters = handler.Method.GetParameters();
         if (parameters.Length == 0) return [];
@@ -89,21 +53,20 @@ public sealed partial class InteractionService
         for (var i = 0; i < parameters.Length; i++)
         {
             var name = GetEffectiveOptionName(parameters[i]);
-            string? raw = handler.Kind switch
+            if (!interaction.Data.Options.TryGetValue(name, out var raw))
             {
-                HandlerKind.SlashCommand => GetOrDefault(interaction.Data.Options, name),
-                // A button's customId pattern usually carries the payload as a trailing wildcard
-                // (e.g. "delete:*" -> capture). A select/combobox customId is normally a fixed string
-                // with no wildcard at all - its payload instead travels in Data.Values (the option(s)
-                // the user picked), so that's the fallback once there's no wildcard capture to use.
-                // Only the first selected value is bound here; a handler that needs every value for a
-                // multi-select component should read interaction.Data.Values directly via the context.
-                HandlerKind.Component => wildcardCapture ?? interaction.Data.Values?.FirstOrDefault(),
-                HandlerKind.Modal => GetOrDefault(interaction.Data.ModalFields, name) ?? wildcardCapture,
-                HandlerKind.Autocomplete => GetOrDefault(interaction.Data.Options, name) ?? interaction.Data.FocusedOption,
-                _ => null,
-            };
-            args[i] = ArgumentConverter.Convert(raw, parameters[i].ParameterType);
+                args[i] = ArgumentConverter.Missing(parameters[i]);
+                continue;
+            }
+
+            try
+            {
+                args[i] = ArgumentConverter.Convert(raw, parameters[i].ParameterType);
+            }
+            catch (FormatException)
+            {
+                throw new CommandRejectedException(_client.Options.Replies.InvalidArgument(name, ArgumentConverter.Describe(parameters[i].ParameterType)));
+            }
         }
 
         return args;
@@ -117,6 +80,13 @@ public sealed partial class InteractionService
     private static string GetEffectiveOptionName(ParameterInfo parameter) =>
         parameter.GetCustomAttribute<SlashCommandOptionAttribute>()?.Name ?? parameter.Name!.ToLowerInvariant();
 
-    private static string? GetOrDefault(IReadOnlyDictionary<string, string>? dict, string key) =>
-        dict is not null && dict.TryGetValue(key, out var value) ? value : null;
+    private async Task RaiseHandlerFailedAsync(Exception ex, BotInteractionEvent interaction)
+    {
+        var handler = HandlerFailed;
+        if (handler is null) return;
+        foreach (var d in handler.GetInvocationList())
+        {
+            await ((Func<Exception, BotInteractionEvent, Task>)d)(ex, interaction).ConfigureAwait(false);
+        }
+    }
 }

@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+import "common.proto";
+
+option csharp_namespace = "Vc.Backend.WebApi.Channels.Grpc";
+
+package channels;
+
+service ChannelsApi {
+  rpc StartChannelConnection(StartChannelConnectionRequest) returns (StartChannelConnectionResponse);
+  rpc UpdateChannel(UpdateChannelRequest) returns (UpdateChannelResponse);
+  rpc GetChannelUsers(GetChannelUsersRequest) returns (GetChannelUsersResponse);
+}
+
+message GetChannelUsersRequest {
+  string channel_id = 1;
+}
+
+message GetChannelUsersResponse {
+  repeated common.ChannelVoiceUser users = 1;
+}
+
+message StartChannelConnectionRequest {
+  string channel_id = 1;
+}
+
+message StartChannelConnectionResponse {
+  string token = 1;
+  string server_url = 2;
+}
+
+message UpdateChannelRequest {
+  string channel_id = 1;
+  optional string name = 2;
+  optional string description = 3;
+  optional int32 user_limit = 4;
+  optional int32 bitrate = 5;
+}
+
+message UpdateChannelResponse {
+  bool success = 1;
+}
+

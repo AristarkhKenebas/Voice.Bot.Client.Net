@@ -1,7 +1,6 @@
 using System.Reflection;
+using Voice.Bot.Client.Net.Internal;
 
 namespace Voice.Bot.Client.Net.Interactions;
 
-internal enum HandlerKind { SlashCommand, Component, Modal, Autocomplete }
-
-internal sealed record RegisteredHandler(HandlerKind Kind, string Match, string? OptionName, MethodInfo Method, Type ModuleType);
+internal sealed record RegisteredHandler(string CommandName, MethodInfo Method, Type ModuleType, CommandMetadata Metadata);

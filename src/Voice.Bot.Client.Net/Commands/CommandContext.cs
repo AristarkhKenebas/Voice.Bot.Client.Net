@@ -1,25 +1,43 @@
-using Voice.Bot.Client.Net.Components;
-using Voice.Bot.Client.Net.Events;
 using Voice.Bot.Client.Net.Models;
 
 namespace Voice.Bot.Client.Net.Commands;
 
-/// <summary>Wraps the triggering <see cref="GatewayMessage"/> plus the owning <see cref="Voice.Bot.Client.Net.BotClient"/>, scoping reply calls to its channel.</summary>
-public sealed class CommandContext
+/// <summary>
+/// Wraps the triggering <see cref="Models.Message"/> plus the owning <see cref="Voice.Bot.Client.Net.BotClient"/>,
+/// scoping reply calls to its channel. Used for text commands and for <see cref="BotClient.OnMessage"/>
+/// handlers (there <see cref="BotContext.CommandName"/> is <c>null</c>).
+/// </summary>
+public sealed class CommandContext : BotContext
 {
-    private readonly BotClient _client;
+    public Message Message { get; }
 
-    public GatewayMessage Message { get; }
-    public Guid ChannelId => Message.ChannelId;
+    /// <summary>The author's id; the same as <see cref="BotContext.UserId"/>.</summary>
     public Guid AuthorId => Message.Author.Id;
 
-    internal CommandContext(BotClient client, GatewayMessage message)
+    /// <summary>The author's profile.</summary>
+    public User Author => Message.Author;
+
+    /// <summary>The prefix the command was called with (<c>"!"</c>, or the bot's mention); <c>null</c> for a plain message.</summary>
+    public string? Prefix { get; }
+
+    /// <summary>The arguments after the command name, split shell-style; empty for a plain message.</summary>
+    public IReadOnlyList<string> Arguments { get; }
+
+    /// <inheritdoc />
+    public override bool IsSlash => false;
+
+    /// <inheritdoc />
+    public override Guid? MessageId => Message.Id;
+
+    internal CommandContext(BotClient client, Message message, Guid? groupId, string? commandName = null, string? prefix = null, IReadOnlyList<string>? arguments = null)
+        : base(client, message.Author.Id, message.ChannelId, groupId, commandName)
     {
-        _client = client;
         Message = message;
+        Prefix = prefix;
+        Arguments = arguments ?? [];
     }
 
-    /// <summary>Sends a reply in the same channel as <see cref="Message"/> (as a reply-to, Discord-style).</summary>
-    public Task<MessageInfo> ReplyAsync(string content, ComponentBuilder? components = null, CancellationToken ct = default) =>
-        _client.SendMessageAsync(Message.ChannelId, content, replyTo: Message.Id, components: components, ct: ct);
+    /// <summary>Sends a reply in the same channel as <see cref="Message"/>, as a reply to it.</summary>
+    private protected override Task<Message> PostReplyAsync(string content, IReadOnlyCollection<Guid> attachmentIds, CancellationToken ct) =>
+        Client.SendMessageAsync(Message.ChannelId, content, replyTo: Message.Id, attachmentIds: attachmentIds, ct: ct);
 }

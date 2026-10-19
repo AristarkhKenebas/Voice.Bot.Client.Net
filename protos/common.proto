@@ -25,6 +25,7 @@ enum AiProviders {
   DEEPSEEK = 3;
   MISTRAL = 4;
   KIMI = 5;
+  MIMO = 6;
 }
 
 // Discord/Claude-style "what the bot is doing right now" reactive status, distinct from the plain
@@ -42,6 +43,7 @@ enum BotTypingState {
 message User {
   string id = 1;
   string username = 2;
+  // Confidential: populated only when this User is the requester's own profile; empty otherwise.
   string email = 3;
   string display_name = 4;
   string description = 5;
@@ -52,10 +54,21 @@ message User {
   google.protobuf.Timestamp last_activity = 10;
   bool is_confirmed = 11;
   bool is_bot = 12;
-  string subscription_type = 13;
-  string avatar_id = 14;
-  string banner_id = 15;
+  Subscription subscription = 13;
+  string avatar_url = 14;
+  string banner_url = 15;
   UserStatus user_status = 16;
+}
+
+// A user currently connected to a voice channel, with their live LiveKit A/V state - see
+// Vc.Backend.WebApi.Channels.Services.ChannelHiddenParticipantService, which observes the room as a
+// hidden participant to keep this in sync (mic/cam reflect published track mute state, is_deafened
+// reflects the client-set `deafened` participant attribute).
+message ChannelVoiceUser {
+  common.User user = 1;
+  bool mic_is_enabled = 2;
+  bool cam_is_enabled = 3;
+  bool is_deafened = 4;
 }
 
 message Bot {
@@ -73,6 +86,7 @@ message Bot {
   // Discord-style Gateway Intents bitmask granted to the bot by its owner — see
   // Vc.Common.Types.BotIntents. Replaces the old string-set "scopes".
   uint64 intents = 12;
+  string avatar_url = 13;
 }
 
 message AgentCredential {
@@ -82,4 +96,12 @@ message AgentCredential {
   google.protobuf.Timestamp created_at = 4;
   google.protobuf.Timestamp updated_at = 5;
   google.protobuf.Timestamp last_used_at = 6;
+}
+
+message Subscription {
+  string id = 1;
+  string tier_code = 2;
+  int64 functions = 3;
+  optional string activated_at = 4;
+  optional string expires_at = 5;
 }
